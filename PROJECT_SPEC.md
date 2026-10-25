@@ -409,6 +409,37 @@ export default function CameraWorkoutPage() {
    - Production Next.js build (`npm run build`) succeeded.
    - Automated end-to-end verification script (`scripts/testStep5Flow.mjs`) verified demo profile generation, metrics, badges, weight validation, JSON export, and cleanup.
 
+### Step 5B – Real Biometric Analytics Engine, Data Collection & Trustworthy Dashboard (COMPLETED)
+1. **Complete Database Audit & Zero Placeholder Guarantee**
+   - Audited every value and calculation across `/progress`, badges, and streak logic. Removed all hardcoded demo/placeholder numbers. Every metric is computed strictly from database records (`WorkoutLog`, `WeightEntry`, `WorkoutDay`, `User`, `WorkoutFeedback`).
+   - **Streak vs Week Row Bug Fixed:** Resolved synchronization bug where an 8-day streak showed only Sunday as done on the week dots. The week row now maps streak progression across the 7-day window ending today so that active streaks never leave prior days blank.
+   - **Profile Data Isolation Verified:** Audited SQLite database `prisma/dev.db`. Verified zero demo data leakage into user Sanskar (ID 3 has 46 logs and 1 weight entry; Demo User has 75 isolated logs flagged with `isDemo: true`).
+
+2. **Expanded Biometric Data Collection (Safe Schema Migrations)**
+   - **User Profile:** Added optional `targetWeightKg` (30–250 kg) and `waistCm` (40–200 cm) in onboarding and via a dismissible `ProfileCompletionCard` on `/progress` (`PATCH /api/users`).
+   - **Set Load Tracking:** Added optional `loadKg` (0–300 kg) on the workout logging screen with per-exercise `localStorage` memory. Old logs without load default to bodyweight. Included in `/logs`, CSV/JSON exports, and `data/workout_logs.json`.
+   - **Workout Effort (RPE) Survey:** Added 5-level RPE survey ("How did it feel?" Very Easy, Easy, Moderate, Hard, Very Hard) with skippable option on `WorkoutSummaryCard` after the final set. Saved to SQLite `WorkoutFeedback` table via `POST /api/workout/feedback`.
+   - **Weekly Body Measurements Check-in:** Added weekly check-in card (`WeeklyCheckInCard.tsx`) on `/progress` for logging weight (kg), waist (cm), chest (cm), hips (cm), and arm (cm). Fully validates input ranges and supports inline history.
+
+3. **Unified Real Metrics Calculator (`src/lib/progress/metricsCalculator.ts`)**
+   - **Consistency %:** (Completed Workouts ÷ Planned Workouts) × 100 with weekly adherence breakdown. Planned rest days are protected and never break streaks.
+   - **Strength Volume & PRs:** Volume = Reps × Load (kg), with bodyweight tracked directly as reps. Personal Records per exercise track highest reps and heaviest load with glowing "New PR" tags for milestones achieved within 7 days.
+   - **Form Mastery & Error Shift:** Average computer-vision score per exercise. Once $\ge 3$ sessions are logged, compares the earlier half against the recent half to highlight eliminated flaws. Shows friendly diagnostic prompt if $<3$ sessions.
+   - **Projected Goal Date & Safety Velocity Check:** Extrapolates linear target completion date ONLY when $\ge 3$ weigh-ins span $\ge 7$ days. Automatically flags an alert if weekly weight change exceeds 1.0% of bodyweight to ensure healthy pacing.
+   - **Calorie Estimation via Compendium METs (`src/lib/progress/metValues.ts`):** Standard scientific MET values (Squat 5.5, Push-Up 4.5, Lunge 5.0, Plank 3.8, Curl 3.8) computing calories as $\text{MET} \times \text{Weight (kg)} \times \text{Hours}$, explicitly labeled as "Estimated".
+   - **Rule-Based Plain-Language Insights:** 3 to 5 deterministic, friendly coaching observations based on actual user consistency, form, PRs, and body trends (zero AI dependency).
+
+4. **Progress Page Polish (`/progress`)**
+   - **Time Range Selector:** Seamless tabs (`7 Days`, `30 Days`, `Whole Program`) filtering metrics on demand.
+   - **Educational Info Modal (`HowIsThisCalculatedModal.tsx`):** Explains all formulas and biometric rationale in plain, accessible language.
+   - **Data Quality Diagnostics:** Informative states on charts explaining exactly how many sessions or weigh-ins are needed to unlock projections and trend lines.
+
+5. **Automated Verification & Testing**
+   - 86 Vitest tests passing across 5 test suites (added 16 tests in `tests/realMetrics.test.ts`).
+   - TypeScript (`npx tsc --noEmit`): 0 errors.
+   - ESLint (`npm run lint`): 0 warnings or errors.
+   - Production build (`npm run build`): All 11 static and dynamic routes compiled and optimized cleanly.
+
 ### Step 6 – 3D Character with Muscle Highlight
 - 3D body model highlighting muscles worked.
 

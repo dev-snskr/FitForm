@@ -7,6 +7,8 @@ export interface UserInputData {
   gender: string;
   heightCm: number;
   weightKg: number;
+  targetWeightKg?: number | null;
+  waistCm?: number | null;
   goal: string;
   experience: string;
   daysPerWeek: number;
@@ -57,6 +59,22 @@ export function validateUserProfile(data: Partial<UserInputData>): ValidationRes
     errors.weightKg = 'Weight must be a valid number.';
   } else if (weight < 30 || weight > 250) {
     errors.weightKg = 'Weight must be between 30 kg and 250 kg.';
+  }
+
+  // Optional target weight validation: 30-250 kg
+  if (data.targetWeightKg !== undefined && data.targetWeightKg !== null && data.targetWeightKg !== ('' as unknown)) {
+    const target = Number(data.targetWeightKg);
+    if (isNaN(target) || target < 30 || target > 250) {
+      errors.targetWeightKg = 'Target weight must be between 30 kg and 250 kg.';
+    }
+  }
+
+  // Optional waist circumference validation: 40-200 cm
+  if (data.waistCm !== undefined && data.waistCm !== null && data.waistCm !== ('' as unknown)) {
+    const waist = Number(data.waistCm);
+    if (isNaN(waist) || waist < 40 || waist > 200) {
+      errors.waistCm = 'Waist circumference must be between 40 cm and 200 cm.';
+    }
   }
 
   // Goal validation: fat loss / muscle gain / maintain

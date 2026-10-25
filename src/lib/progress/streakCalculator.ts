@@ -194,10 +194,9 @@ export function calculateStreak(
     streakAtRiskMessage = `Your ${activeStreak}-day streak is on the line today! Complete Day ${nextDay.dayNumber} to keep the flame alive.`;
   }
 
-  // 6. Build "This Week" (last 7 calendar days ending today)
+  // 6. Build "This Week" (7-day window ending today, guaranteed to align with the streak)
   const thisWeek: WeekDayDot[] = [];
   const todayDate = parseLocalDateString(todayStr);
-
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   for (let offset = 6; offset >= 0; offset--) {
@@ -207,26 +206,44 @@ export function calculateStreak(
     const dayName = dayNames[targetDate.getDay()];
     const isToday = offset === 0;
 
-    // Check if any plan day was completed on this calendar date
-    const matchedCompleted = planDays.find(
+    // Direct calendar log check
+    const matchedLog = planDays.find(
       (d) => d.completedAt && formatToLocalDateString(new Date(d.completedAt)) === dateStr
     );
 
     let status: DayStatus = 'upcoming';
 
-    if (matchedCompleted) {
+    if (matchedLog) {
       status = 'done';
-    } else if (offset > 0) {
-      // Past days: check if user profile was created by this date
-      if (userCreatedDateStr && dateStr < userCreatedDateStr) {
-        status = 'upcoming'; // Before profile existed
-      } else {
-        // Was this day a rest day or missed?
-        status = 'rest';
-      }
+    } else if (isToday) {
+      status = hasLoggedToday ? 'done' : isStreakAtRisk ? 'upcoming' : 'upcoming';
     } else {
-      // Today
-      status = isStreakAtRisk ? 'upcoming' : 'upcoming';
+      // Past day in the week: check alignment with active continuous streak
+      // If the current active streak covers this offset (i.e. offset < activeStreak)
+      if (activeStreak > offset) {
+        // Map to corresponding plan day in the streak sequence
+        const correspondingDayNumber = maxCompletedDayNumber - offset;
+        const planDay = planDays.find((p) => p.dayNumber === correspondingDayNumber);
+
+        if (planDay) {
+          if (planDay.isCompleted) {
+            status = 'done';
+          } else if (planDay.isRest) {
+            status = 'rest';
+          } else {
+            status = 'missed';
+          }
+        } else {
+          status = 'done';
+        }
+      } else {
+        // Prior to current streak
+        if (userCreatedDateStr && dateStr < userCreatedDateStr) {
+          status = 'upcoming';
+        } else {
+          status = 'missed';
+        }
+      }
     }
 
     thisWeek.push({

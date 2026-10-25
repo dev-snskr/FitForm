@@ -74,6 +74,7 @@ export default function WorkoutSessionPage() {
   const [lastLoggedLogId, setLastLoggedLogId] = useState<number | null>(null);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [unlockedBadge, setUnlockedBadge] = useState<UnlockedBadgeInfo | null>(null);
+  const [loadKgInput, setLoadKgInput] = useState<string>('');
 
   // Accumulated workout session statistics for final summary
   const sessionStatsRef = useRef<{
@@ -150,10 +151,14 @@ export default function WorkoutSessionPage() {
     return dayData.exercises[currentExerciseIndex] || null;
   }, [dayData, currentExerciseIndex]);
 
-  // Update manual reps input whenever exercise changes
+  // Update manual reps and load input whenever exercise changes
   useEffect(() => {
     if (currentExercise) {
       setManualReps(currentExercise.reps || 12);
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(`fitform_last_load_${currentExercise.exerciseName}`);
+        setLoadKgInput(saved || '');
+      }
     }
   }, [currentExercise]);
 
@@ -174,6 +179,11 @@ export default function WorkoutSessionPage() {
 
     setIsSavingLog(true);
     try {
+      const parsedLoad = loadKgInput && parseFloat(loadKgInput) > 0 ? parseFloat(loadKgInput) : null;
+      if (typeof window !== 'undefined' && currentExercise && loadKgInput) {
+        localStorage.setItem(`fitform_last_load_${currentExercise.exerciseName}`, loadKgInput);
+      }
+
       const payload = {
         userId,
         userName,
@@ -181,6 +191,7 @@ export default function WorkoutSessionPage() {
         exercise: currentExercise.exerciseName,
         setNumber: currentSetNumber,
         reps,
+        loadKg: parsedLoad,
         durationSeconds: durationSeconds ?? null,
         formScore,
         mistakes,
@@ -391,7 +402,11 @@ export default function WorkoutSessionPage() {
           onClose={() => setUnlockedBadge(null)}
         />
 
-        <WorkoutSummaryCard summary={summaryData} />
+        <WorkoutSummaryCard
+          summary={summaryData}
+          userId={userId ?? undefined}
+          dayNumber={parseInt(dayNumber, 10)}
+        />
       </div>
     );
   }
@@ -501,6 +516,34 @@ export default function WorkoutSessionPage() {
                     {currentExercise.durationSecs ? `${currentExercise.durationSecs}s` : currentExercise.reps}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Weight / Load Input Section */}
+            <div className="py-4 border-b border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <label htmlFor="loadInput" className="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  Weight Used / Load (kg)
+                </label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Optional. Leave empty for bodyweight reps. Remembers last value for {currentExercise.exerciseName}.
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  id="loadInput"
+                  type="number"
+                  min="0"
+                  max="300"
+                  step="0.5"
+                  value={loadKgInput}
+                  onChange={(e) => setLoadKgInput(e.target.value)}
+                  placeholder="Bodyweight"
+                  className="w-36 glass-input rounded-xl px-3 py-1.5 text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500"
+                />
+                <span className="absolute right-3 top-1.5 text-xs text-slate-400 pointer-events-none">
+                  kg
+                </span>
               </div>
             </div>
 

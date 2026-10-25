@@ -16,6 +16,7 @@ import {
   PlanDayInfo,
 } from '@/lib/progress/streakCalculator';
 import { BADGE_DEFINITIONS, BadgeContext } from '@/lib/progress/badgesConfig';
+import { calculateUserMetrics } from '@/lib/progress/metricsCalculator';
 
 const MISTAKE_COACHING_TIPS: Record<string, string> = {
   'knees caving in': 'Push your knees outward and track them directly over your middle toes as you descend.',
@@ -43,6 +44,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userIdStr = searchParams.get('userId');
+    const timeRangeParam = searchParams.get('timeRange');
+    const selectedTimeRange: '7d' | '30d' | 'all' =
+      timeRangeParam === '7d' || timeRangeParam === '30d' ? timeRangeParam : 'all';
 
     if (!userIdStr) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
@@ -62,6 +66,8 @@ export async function GET(req: NextRequest) {
         goal: true,
         experience: true,
         weightKg: true,
+        targetWeightKg: true,
+        waistCm: true,
         isDemo: true,
         createdAt: true,
       },
@@ -238,12 +244,6 @@ export async function GET(req: NextRequest) {
     // Chart Datasets & Metric Summaries
     // ----------------------------------------------------
     const scoredLogs = logs.filter((l) => l.formScore !== null && l.formScore !== undefined);
-    const averageFormScore =
-      scoredLogs.length > 0
-        ? Math.round(
-            scoredLogs.reduce((sum, l) => sum + (l.formScore || 0), 0) / scoredLogs.length
-          )
-        : null;
 
     // Best set
     let bestSet: {
@@ -267,13 +267,7 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    const totalReps = logs.reduce((sum, l) => sum + (l.reps || 0), 0);
     const totalPlankSeconds = logs.reduce((sum, l) => sum + (l.durationSeconds || 0), 0);
-    const totalRestSeconds = logs.reduce((sum, l) => sum + (l.restSeconds || 60), 0);
-
-    // Total workout minutes estimate (time under tension + plank + rest duration)
-    const estimatedActiveSeconds = totalReps * 3.5 + totalPlankSeconds + totalRestSeconds;
-    const totalWorkoutMinutes = Math.max(1, Math.round(estimatedActiveSeconds / 60));
 
     // 1. Form Score Over Time (per completed day with scores)
     const formScoreOverTime: {
@@ -309,8 +303,13 @@ export async function GET(req: NextRequest) {
     const weightDelta = Number((currentWeight - startWeight).toFixed(1));
 
     const weightHistory = weightEntries.map((w) => ({
+      id: w.id,
       date: w.date,
       weightKg: w.weightKg,
+      waistCm: w.waistCm,
+      chestCm: w.chestCm,
+      hipsCm: w.hipsCm,
+      armCm: w.armCm,
     }));
 
     // 3. Weekly Volume (Weeks 1 to 5)
@@ -408,17 +407,56 @@ export async function GET(req: NextRequest) {
       }));
     });
 
+    // Compute comprehensive, verified metrics with timeRange filtering
+    const metrics = calculateUserMetrics({
+      user: {
+        id: user.id,
+        name: user.name,
+        weightKg: user.weightKg,
+        targetWeightKg: user.targetWeightKg,
+        waistCm: user.waistCm,
+        goal: user.goal,
+        createdAt: user.createdAt,
+      },
+      workoutDays: workoutDays.map((w) => ({ dayNumber: w.dayNumber, isRest: w.isRest })),
+      logs: logs.map((l) => ({
+        id: l.id,
+        dayNumber: l.dayNumber,
+        exercise: l.exercise,
+        reps: l.reps,
+        durationSeconds: l.durationSeconds,
+        loadKg: l.loadKg,
+        formScore: l.formScore,
+        mistakes: l.mistakes,
+        completedAt: l.completedAt,
+      })),
+      weightEntries: weightEntries.map((w) => ({
+        id: w.id,
+        weightKg: w.weightKg,
+        waistCm: w.waistCm,
+        chestCm: w.chestCm,
+        hipsCm: w.hipsCm,
+        armCm: w.armCm,
+        date: w.date,
+        recordedAt: w.recordedAt,
+      })),
+      timeRange: selectedTimeRange,
+    });
+
     return NextResponse.json({
       user,
       isEmpty: logs.length === 0,
+      timeRange: selectedTimeRange,
+      metrics,
       summary: {
-        averageFormScore,
+        averageFormScore: metrics.form.averageScore,
         bestSet,
-        totalReps,
+        totalReps: metrics.strength.totalReps,
         totalPlankSeconds,
-        totalWorkoutMinutes,
+        totalWorkoutMinutes: metrics.calories.activeMinutes,
         totalWorkoutsCompleted: streakResult.totalWorkoutsCompleted,
         totalSets: logs.length,
+        estimatedCalories: metrics.calories.totalCalories,
       },
       streak: streakResult,
       badges: evaluatedBadges,
@@ -430,7 +468,15 @@ export async function GET(req: NextRequest) {
           weightDelta,
           entries: weightHistory,
         },
-        weeklyVolume,
+        weeklyVolume: metrics.strength.weeklyTrends.map((wt) => ({
+          week: `Week ${wt.weekNumber}`,
+          weekNumber: wt.weekNumber,
+          totalReps: wt.reps,
+          totalVolumeKg: wt.volumeKg,
+          totalPlankSeconds: wt.plankSeconds,
+          workoutsCompleted: wt.workoutsCompleted,
+          workoutsPlanned: wt.workoutsPlanned,
+        })),
         mistakesBreakdown,
         topMistakeTip,
         exerciseFormTrends,

@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         exercise: log.exercise,
         setNumber: log.setNumber,
         reps: isPlank ? 0 : log.reps,
+        loadKg: log.loadKg ?? null,
         durationSeconds,
         formScore: log.formScore,
         mistakes,
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
         'Exercise',
         'Set',
         'Reps',
+        'Load (kg)',
         'Duration (s)',
         'Form Score',
         'Mistakes',
@@ -97,6 +99,7 @@ export async function GET(request: NextRequest) {
         escapeCsv(log.exercise),
         escapeCsv(log.setNumber),
         escapeCsv(log.exercise.toLowerCase().includes('plank') ? '-' : log.reps),
+        escapeCsv(log.loadKg !== null && log.loadKg !== undefined ? `${log.loadKg} kg` : 'Bodyweight'),
         escapeCsv(log.durationSeconds !== null ? `${log.durationSeconds} s` : '-'),
         escapeCsv(log.formScore ?? 'N/A'),
         escapeCsv(log.mistakes.join('; ')),
@@ -147,12 +150,21 @@ export async function POST(request: NextRequest) {
       exercise,
       setNumber,
       reps,
+      loadKg,
       durationSeconds,
       formScore,
       mistakes,
       restSeconds,
       mode,
     } = body;
+
+    let parsedLoadKg: number | null = null;
+    if (loadKg !== undefined && loadKg !== null && loadKg !== '') {
+      const parsed = parseFloat(loadKg);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 300) {
+        parsedLoadKg = Number(parsed.toFixed(1));
+      }
+    }
 
     // Validate required fields (reps or durationSeconds must be provided)
     const effectiveReps = reps !== undefined ? Number(reps) : Number(durationSeconds || 0);
@@ -187,6 +199,7 @@ export async function POST(request: NextRequest) {
         exercise: exercise.trim(),
         setNumber: Number(setNumber),
         reps: effectiveReps,
+        loadKg: parsedLoadKg,
         durationSeconds:
           durationSeconds !== undefined && durationSeconds !== null
             ? Number(durationSeconds)

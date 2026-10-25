@@ -4,13 +4,15 @@
 // FitForm Workout Completion Celebration Card
 // Displayed when the final set of the workout day is logged.
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Trophy,
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  Smile,
+  Check,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -27,9 +29,62 @@ export interface WorkoutSummaryData {
 
 interface WorkoutSummaryCardProps {
   summary: WorkoutSummaryData;
+  userId?: number;
+  dayNumber?: number;
 }
 
-export default function WorkoutSummaryCard({ summary }: WorkoutSummaryCardProps) {
+const RPE_OPTIONS = [
+  { score: 1, label: 'Very Easy', emoji: '😌', color: 'border-emerald-400 text-emerald-600 dark:text-emerald-400' },
+  { score: 2, label: 'Easy', emoji: '🙂', color: 'border-teal-400 text-teal-600 dark:text-teal-400' },
+  { score: 3, label: 'Moderate', emoji: '💪', color: 'border-blue-400 text-blue-600 dark:text-blue-400' },
+  { score: 4, label: 'Hard', emoji: '🔥', color: 'border-amber-400 text-amber-600 dark:text-amber-400' },
+  { score: 5, label: 'Very Hard', emoji: '🥵', color: 'border-rose-400 text-rose-600 dark:text-rose-400' },
+];
+
+export default function WorkoutSummaryCard({ summary, userId: propUserId, dayNumber: propDayNumber }: WorkoutSummaryCardProps) {
+  const [activeUserId, setActiveUserId] = useState<number | null>(propUserId || null);
+  const [selectedRpe, setSelectedRpe] = useState<number | null>(null);
+  const [isSavingFeedback, setIsSavingFeedback] = useState(false);
+  const [feedbackSaved, setFeedbackSaved] = useState(false);
+  const [skippedFeedback, setSkippedFeedback] = useState(false);
+
+  const effectiveDay = propDayNumber || summary.dayNumber;
+
+  useEffect(() => {
+    if (!activeUserId) {
+      const stored = localStorage.getItem('fitform_active_user_id');
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed)) setActiveUserId(parsed);
+      }
+    }
+  }, [activeUserId]);
+
+  const handleRateWorkout = async (score: number) => {
+    if (!activeUserId) return;
+    setSelectedRpe(score);
+    setIsSavingFeedback(true);
+    setSkippedFeedback(false);
+
+    try {
+      const res = await fetch('/api/workout/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: activeUserId,
+          dayNumber: effectiveDay,
+          rpeScore: score,
+        }),
+      });
+      if (res.ok) {
+        setFeedbackSaved(true);
+      }
+    } catch (e) {
+      console.error('Failed to save workout feedback:', e);
+    } finally {
+      setIsSavingFeedback(false);
+    }
+  };
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -142,6 +197,62 @@ export default function WorkoutSummaryCard({ summary }: WorkoutSummaryCardProps)
             </div>
           )}
         </div>
+
+        {/* How did it feel? (RPE Survey) */}
+        {!skippedFeedback && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/30 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-200/60 dark:border-indigo-500/20 mb-6 relative z-10">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center space-x-2">
+                <Smile className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  How did today feel?
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSkippedFeedback(true)}
+                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
+                Skip
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              Rate your effort level to help dial in your training volume and recovery.
+            </p>
+
+            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+              {RPE_OPTIONS.map((opt) => {
+                const isSelected = selectedRpe === opt.score;
+                return (
+                  <button
+                    key={opt.score}
+                    type="button"
+                    disabled={isSavingFeedback}
+                    onClick={() => handleRateWorkout(opt.score)}
+                    className={`py-2 px-1 sm:px-2 rounded-xl text-center border transition-all cursor-pointer disabled:opacity-50 ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/25 scale-102 font-bold'
+                        : 'bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700/80 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-base sm:text-lg mb-0.5">{opt.emoji}</div>
+                    <div className="text-[10px] sm:text-[11px] font-semibold leading-tight line-clamp-1">
+                      {opt.label}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {feedbackSaved && (
+              <div className="mt-3 flex items-center justify-center space-x-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 animate-fadeIn">
+                <Check className="w-3.5 h-3.5" />
+                <span>Logged! Rest up.</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Return to Timeline Button */}
         <div className="relative z-10">

@@ -29,6 +29,7 @@ interface LogItem {
   exercise: string;
   setNumber: number;
   reps: number;
+  loadKg?: number | null;
   durationSeconds?: number | null;
   formScore: number | null;
   mistakes: string[];
@@ -314,6 +315,7 @@ export default function LogsPage() {
                   <th className="py-3.5 px-4">Exercise</th>
                   <th className="py-3.5 px-4 text-center">Set</th>
                   <th className="py-3.5 px-4 text-center">Reps / Hold</th>
+                  <th className="py-3.5 px-4 text-center">Load</th>
                   <th className="py-3.5 px-4 text-center">Score</th>
                   <th className="py-3.5 px-4">Detected Mistakes</th>
                   <th className="py-3.5 px-4 text-center">Rest</th>
@@ -370,6 +372,11 @@ export default function LogsPage() {
                           : log.exercise.toLowerCase().includes('plank')
                           ? `${log.reps} s`
                           : log.reps}
+                      </td>
+
+                      {/* Load / Weight Used */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                        {log.loadKg ? `${log.loadKg} kg` : 'BW'}
                       </td>
 
                       {/* Form Score */}

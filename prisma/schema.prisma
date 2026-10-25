@@ -11,22 +11,25 @@ generator client {
 }
 
 model User {
-  id            Int           @id @default(autoincrement())
-  name          String
-  age           Int
-  gender        String
-  heightCm      Float
-  weightKg      Float
-  goal          String
-  experience    String
-  daysPerWeek   Int
-  isDemo        Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  workoutDays   WorkoutDay[]
-  logs          WorkoutLog[]
-  dietPlans     DietPlan[]
-  weightEntries WeightEntry[]
-  badges        UserBadge[]
+  id             Int               @id @default(autoincrement())
+  name           String
+  age            Int
+  gender         String
+  heightCm       Float
+  weightKg       Float
+  targetWeightKg Float?
+  waistCm        Float?
+  goal           String
+  experience     String
+  daysPerWeek    Int
+  isDemo         Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  workoutDays    WorkoutDay[]
+  logs           WorkoutLog[]
+  dietPlans      DietPlan[]
+  weightEntries  WeightEntry[]
+  badges         UserBadge[]
+  feedbacks      WorkoutFeedback[]
 }
 
 model WorkoutDay {
@@ -64,6 +67,7 @@ model WorkoutLog {
   exercise        String
   setNumber       Int
   reps            Int
+  loadKg          Float?   // Optional load/weight used in kg (null or empty means bodyweight)
   durationSeconds Int?     // Duration in seconds for timed exercises (e.g. Plank)
   formScore       Float?
   mistakes        String   // JSON string or comma-separated list of mistakes
@@ -93,6 +97,10 @@ model WeightEntry {
   userId     Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   weightKg   Float
+  waistCm    Float?   // Optional waist circumference in cm
+  chestCm    Float?   // Optional chest circumference in cm
+  hipsCm     Float?   // Optional hips circumference in cm
+  armCm      Float?   // Optional arm circumference in cm
   date       String   // "YYYY-MM-DD" local calendar date
   recordedAt DateTime @default(now())
 
@@ -107,4 +115,16 @@ model UserBadge {
   earnedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
+}
+
+model WorkoutFeedback {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayNumber Int
+  rpeScore  Int      // 1: Very Easy, 2: Easy, 3: Moderate, 4: Hard, 5: Very Hard
+  feedback  String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dayNumber])
 }

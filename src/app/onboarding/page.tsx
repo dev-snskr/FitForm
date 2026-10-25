@@ -32,6 +32,8 @@ export default function OnboardingPage() {
     gender: 'male',
     heightCm: '',
     weightKg: '',
+    targetWeightKg: '',
+    waistCm: '',
     goal: 'muscle_gain',
     experience: 'beginner',
     daysPerWeek: 4,
@@ -305,6 +307,67 @@ export default function OnboardingPage() {
                   <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center">
                     <AlertCircle className="w-3.5 h-3.5 mr-1" />
                     {errors.weightKg}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Optional Target Weight & Waist */}
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="targetWeightKg" className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                  Target Weight <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(Optional, 30 - 250 kg)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="targetWeightKg"
+                    name="targetWeightKg"
+                    value={formData.targetWeightKg}
+                    onChange={handleChange}
+                    placeholder="e.g. 68"
+                    step="0.1"
+                    className={`w-full px-4 py-2.5 rounded-xl placeholder-slate-400 dark:placeholder-slate-500 glass-input ${
+                      errors.targetWeightKg ? 'border-red-500' : ''
+                    }`}
+                  />
+                  <span className="absolute right-3.5 top-2.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    kg
+                  </span>
+                </div>
+                {errors.targetWeightKg && (
+                  <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center">
+                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                    {errors.targetWeightKg}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="waistCm" className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                  Waist Circumference <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(Optional, 40 - 200 cm)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="waistCm"
+                    name="waistCm"
+                    value={formData.waistCm}
+                    onChange={handleChange}
+                    placeholder="e.g. 82"
+                    step="0.5"
+                    className={`w-full px-4 py-2.5 rounded-xl placeholder-slate-400 dark:placeholder-slate-500 glass-input ${
+                      errors.waistCm ? 'border-red-500' : ''
+                    }`}
+                  />
+                  <span className="absolute right-3.5 top-2.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    cm
+                  </span>
+                </div>
+                {errors.waistCm && (
+                  <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center">
+                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                    {errors.waistCm}
                   </p>
                 )}
               </div>

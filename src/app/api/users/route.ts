@@ -75,10 +75,15 @@ export async function POST(request: NextRequest) {
       gender,
       heightCm,
       weightKg,
+      targetWeightKg,
+      waistCm,
       goal,
       experience,
       daysPerWeek,
     } = body;
+
+    const parsedTargetWeight = targetWeightKg ? parseFloat(targetWeightKg) : null;
+    const parsedWaistCm = waistCm ? parseFloat(waistCm) : null;
 
     // Generate deterministic 30-day plan
     const generatedDays = generate30DayPlan(goal, experience, Number(daysPerWeek));
@@ -92,17 +97,20 @@ export async function POST(request: NextRequest) {
           gender: gender.toLowerCase(),
           heightCm: parseFloat(heightCm),
           weightKg: parseFloat(weightKg),
+          targetWeightKg: parsedTargetWeight,
+          waistCm: parsedWaistCm,
           goal: goal.toLowerCase(),
           experience: experience.toLowerCase(),
           daysPerWeek: Number(daysPerWeek),
         },
       });
 
-      // Seed initial onboarding weight entry
+      // Seed initial onboarding weight entry (with optional initial waist)
       await tx.weightEntry.create({
         data: {
           userId: user.id,
           weightKg: parseFloat(weightKg),
+          waistCm: parsedWaistCm,
           date: formatToLocalDateString(new Date()),
         },
       });
@@ -145,5 +153,53 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create user profile. Please check your data and try again.' },
       { status: 500 }
     );
+  }
+}
+
+// PATCH: update user profile (e.g. target weight, waist circumference)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { userId, targetWeightKg, waistCm } = body;
+
+    if (!userId || typeof userId !== 'number') {
+      return NextResponse.json({ error: 'Valid userId required' }, { status: 400 });
+    }
+
+    const updateData: { targetWeightKg?: number | null; waistCm?: number | null } = {};
+
+    if (targetWeightKg !== undefined) {
+      if (targetWeightKg === null || targetWeightKg === '') {
+        updateData.targetWeightKg = null;
+      } else {
+        const val = parseFloat(targetWeightKg);
+        if (isNaN(val) || val < 30 || val > 250) {
+          return NextResponse.json({ error: 'Target weight must be between 30 and 250 kg' }, { status: 400 });
+        }
+        updateData.targetWeightKg = val;
+      }
+    }
+
+    if (waistCm !== undefined) {
+      if (waistCm === null || waistCm === '') {
+        updateData.waistCm = null;
+      } else {
+        const val = parseFloat(waistCm);
+        if (isNaN(val) || val < 40 || val > 200) {
+          return NextResponse.json({ error: 'Waist circumference must be between 40 and 200 cm' }, { status: 400 });
+        }
+        updateData.waistCm = val;
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return NextResponse.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error('Failed to update user profile:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

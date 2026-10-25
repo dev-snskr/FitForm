@@ -14,6 +14,7 @@ export interface FormattedWorkoutLog {
   exercise: string;
   setNumber: number;
   reps: number;
+  loadKg?: number | null;
   durationSeconds?: number | null;
   formScore: number | null;
   mistakes: string[];
@@ -56,6 +57,7 @@ export async function syncWorkoutLogsToJson(): Promise<FormattedWorkoutLog[]> {
         exercise: log.exercise,
         setNumber: log.setNumber,
         reps: isPlank ? 0 : log.reps,
+        loadKg: log.loadKg ?? null,
         durationSeconds,
         formScore: log.formScore,
         mistakes: parsedMistakes,

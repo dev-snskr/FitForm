@@ -168,6 +168,42 @@ describe('FitForm Streak Engine', () => {
     const formatted = formatToLocalDateString(parsed);
     expect(formatted).toBe('2026-10-25');
   });
+
+  it('guarantees 8-day streak marks all days of "This week" correctly without blank days (Step 5B bug fix)', () => {
+    // 8-day program progression: Days 1-6 workouts, Day 7 Rest, Day 8 workout
+    const plan: PlanDayInfo[] = [
+      { dayNumber: 1, workoutType: 'Push', isRest: false, isCompleted: true },
+      { dayNumber: 2, workoutType: 'Pull', isRest: false, isCompleted: true },
+      { dayNumber: 3, workoutType: 'Legs', isRest: false, isCompleted: true },
+      { dayNumber: 4, workoutType: 'Core', isRest: false, isCompleted: true },
+      { dayNumber: 5, workoutType: 'Full Body', isRest: false, isCompleted: true },
+      { dayNumber: 6, workoutType: 'Push', isRest: false, isCompleted: true },
+      { dayNumber: 7, workoutType: 'Rest Day', isRest: true, isCompleted: false },
+      { dayNumber: 8, workoutType: 'Pull', isRest: false, isCompleted: true, completedAt: '2026-10-25T10:00:00.000Z' },
+    ];
+
+    const result = calculateStreak(plan, '2026-10-25', '2026-10-25');
+    expect(result.currentStreak).toBe(8);
+
+    // Verify all 7 days of thisWeek are accounted for and none are left blank/upcoming
+    expect(result.thisWeek.length).toBe(7);
+
+    // None should be upcoming
+    const upcomingCount = result.thisWeek.filter((d) => d.status === 'upcoming').length;
+    expect(upcomingCount).toBe(0);
+
+    // Yesterday (Day 7) must be marked as rest
+    const yesterday = result.thisWeek[result.thisWeek.length - 2];
+    expect(yesterday.status).toBe('rest');
+
+    // Today (Day 8) must be marked as done
+    const today = result.thisWeek[result.thisWeek.length - 1];
+    expect(today.status).toBe('done');
+
+    // Days 2 to 6 must be marked done
+    const doneDays = result.thisWeek.filter((d) => d.status === 'done');
+    expect(doneDays.length).toBe(6);
+  });
 });
 
 describe('FitForm Badge Evaluation Rules (Threshold Boundaries)', () => {
