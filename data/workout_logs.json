@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "userName": "Alex Johnson",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 10,
+    "formScore": 94.5,
+    "mistakes": [
+      "Knees slight valgus on rep 8"
+    ],
+    "restSeconds": 150,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T06:16:47.297Z"
+  }
+]

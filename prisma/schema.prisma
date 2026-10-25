@@ -1,0 +1,68 @@
+// FitForm Prisma Schema
+// SQLite file-based database for local zero-config operation
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  name        String
+  age         Int
+  gender      String
+  heightCm    Float
+  weightKg    Float
+  goal        String
+  experience  String
+  daysPerWeek Int
+  createdAt   DateTime     @default(now())
+  workoutDays WorkoutDay[]
+  logs        WorkoutLog[]
+}
+
+model WorkoutDay {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayNumber   Int
+  workoutType String
+  isRest      Boolean
+  exercises   DayExercise[]
+
+  @@unique([userId, dayNumber])
+}
+
+model DayExercise {
+  id            Int        @id @default(autoincrement())
+  workoutDayId  Int
+  workoutDay    WorkoutDay @relation(fields: [workoutDayId], references: [id], onDelete: Cascade)
+  exerciseName  String
+  targetMuscles String
+  sets          Int
+  reps          Int
+  durationSecs  Int?
+  restSeconds   Int
+  formTrackable Boolean
+  orderIndex    Int
+}
+
+model WorkoutLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName    String
+  dayNumber   Int
+  exercise    String
+  setNumber   Int
+  reps        Int
+  formScore   Float?
+  mistakes    String   // JSON string or comma-separated list of mistakes
+  restSeconds Int
+  mode        String   // "live_camera" or "video_upload"
+  completedAt DateTime @default(now())
+}
