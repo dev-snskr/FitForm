@@ -57,7 +57,7 @@ async function main() {
   const sha = await git.commit({
     fs,
     dir,
-    message: 'UI Upgrade: Radiating lines background system with 30fps canvas and interactive glass timeline for /plan',
+    message: 'Step 3A: Implement interactive workout session flow, on-device MediaPipe Pose squat checking, and developer pose simulation studio',
     author: {
       name: 'FitForm Developer',
       email: 'developer@fitform.local',

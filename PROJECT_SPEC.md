@@ -175,9 +175,46 @@ export default function CameraWorkoutPage() {
    - Export: one-click "Export Diet JSON" with formatted `attachment` download.
    - Persists all generated diet plans to SQLite `DietPlan` table.
 
-### Step 3 – Live Camera Form Checking
-- MediaPipe Pose integration for real-time form analysis.
-- Rep counting + form score for the 5 primary exercises.
+### Step 3A – Workout Flow & Live Camera Squat Form Checking (COMPLETED)
+1. **Interactive Workout Flow (`/workout/[day]`)**
+   - Launched directly from `/plan/[day]` via the enabled "Start Workout" button on workout days.
+   - Stepper walks through prescribed exercises set-by-set (Set N of Total Sets, Goal Reps, Target Muscles).
+   - "Check My Form" modal:
+     - "Live Camera": Available for Squat exercises using on-device MediaPipe Pose.
+     - "Upload Video": Disabled and labeled "Coming in Step 7".
+     - Non-squat exercises: Labeled "Form check coming soon" with manual reps logging fallback.
+   - Saves completed sets via `POST /api/logs` with `mode: "live_camera"` (with form scores) or `mode: "manual"` (with `formScore: null`, displayed as "Not scored").
+   - "Set Complete" card displays reps logged, form score, and mistake feedback notes with a "Next Set" transition button.
+   - Entire day counts as completed on the timeline when all sets are logged.
+
+2. **On-Device MediaPipe Pose Engine (Zero External CDN Runtime Dependency)**
+   - Model file: [`public/mediapipe/models/pose_landmarker_lite.task`](file:///c:/Users/Sanskar/Desktop/cep2/public/mediapipe/models/pose_landmarker_lite.task) (5.51 MB).
+   - WASM binaries: [`public/mediapipe/wasm/`](file:///c:/Users/Sanskar/Desktop/cep2/public/mediapipe/wasm/) (`vision_wasm_internal.wasm`, `vision_wasm_nosimd_internal.wasm`).
+   - Privacy guarantee clearly displayed: *"Your camera video stays on your device"*.
+   - Camera permission handling with clear error diagnostics (Denied, Not Found, In Use).
+   - Mirrored video feed with real-time skeleton overlay (joints and glowing bones).
+   - Dynamic video boundary glow (Green = Good Form, Amber = Warning/Mistake, Red = Critical/Out of Frame).
+   - Detection throttled to ~20 FPS for minimal CPU/GPU load.
+   - Sets global animated background to `"static"` mode during camera tracking.
+
+3. **Biomechanical Squat Analysis & Rep Counting Engine**
+   - Config file: [`src/lib/pose/squatConfig.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/squatConfig.ts) (all thresholds in one place).
+   - Detector: [`src/lib/pose/squatDetector.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/squatDetector.ts) state machine (`STANDING` -> `DESCENDING` -> `BOTTOM` -> `ASCENDING` -> `STANDING`).
+   - Angle math: [`src/lib/pose/angleMath.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/angleMath.ts) (interior joint angles, torso lean from vertical, knee vs toe travel, EMA jitter filter).
+   - Rules:
+     - **Depth:** Knee angle at bottom must reach below ~100°; otherwise flags "Not deep enough" (-25 pts).
+     - **Back Lean:** Torso angle from vertical must stay under ~45°; otherwise flags "Leaning too far forward" (-20 pts).
+     - **Tempo / Speed:** Descent faster than 950ms flags "Too fast — control your descent" (-15 pts).
+     - **Knee Past Toes:** Evaluated only when foot landmark confidence is high ($\ge 0.75$) to prevent false flags.
+     - **Body-in-Frame:** Shows "Step back, we can't see your full body" when key landmarks have low confidence.
+     - **Auto-Finish:** Automatically completes set after 8 seconds of inactivity once at least 1 rep is logged.
+
+4. **Testing Suite & Developer Pose Simulation Studio (`/dev/pose-test`)**
+   - Unit tests ([`tests/squatDetector.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/squatDetector.test.ts)) with Vitest verifying 6 synthetic scenarios (Perfect Squat, Shallow Squat, Forward Lean, Fast Descent, Stationary Jitter, Out of Frame).
+   - Interactive developer preview studio at `/dev/pose-test` to scrub, step through, and replay synthetic landmark frames with live telemetry and DB test logging without a physical webcam.
+
+### Step 3B – Form Checking for Remaining Exercises (UPCOMING)
+- MediaPipe Pose form checking for: Push-Up, Bicep Curl, Lunge, Forearm Plank.
 
 ### Step 4 – Voice Corrections + Rest Timer
 - Audio feedback for form mistakes.

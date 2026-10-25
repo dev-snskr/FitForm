@@ -15,12 +15,12 @@ import {
   Timer,
   Repeat,
   Layers,
-  Lock,
   Coffee,
   CheckCircle2,
   AlertCircle,
   Loader2,
   ShieldCheck,
+  ChevronRight,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getStoredActiveUserId } from '@/lib/profileStorage';
@@ -200,20 +200,23 @@ export default function DayPlanPage() {
             </p>
           </div>
 
-          {/* Action button: Disabled "Coming in Step 3" */}
+          {/* Action button: Enabled for workout days, links to /workout/[day] */}
           <div>
-            <button
-              type="button"
-              disabled
-              title="Camera form checking will unlock in Step 3"
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-sm font-semibold cursor-not-allowed shadow-inner"
-            >
-              <Lock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Start Workout</span>
-              <span className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2 py-0.5 rounded-md ml-1">
-                Coming in Step 3
-              </span>
-            </button>
+            {!dayData.isRest ? (
+              <Link
+                href={`/workout/${dayData.dayNumber}`}
+                className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition shadow-lg shadow-indigo-600/30 cursor-pointer active:scale-98"
+              >
+                <Dumbbell className="w-4 h-4" />
+                <span>{isCompleted ? 'Restart Workout' : 'Start Workout'}</span>
+                <ChevronRight className="w-4 h-4 ml-0.5" />
+              </Link>
+            ) : (
+              <div className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+                <Coffee className="w-4 h-4 text-amber-500" />
+                <span>Rest &amp; Recovery Day</span>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>

@@ -1,5 +1,51 @@
 [
   {
+    "id": 7,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 2,
+    "exercise": "Push-Up",
+    "setNumber": 2,
+    "reps": 12,
+    "formScore": 94,
+    "mistakes": [
+      "Keep elbows tucked at 45 degrees"
+    ],
+    "restSeconds": 90,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T10:47:37.268Z"
+  },
+  {
+    "id": 6,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 12,
+    "formScore": 92,
+    "mistakes": [
+      "Not deep enough on rep 8"
+    ],
+    "restSeconds": 45,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T10:47:00.580Z"
+  },
+  {
+    "id": 5,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 1,
+    "exercise": "Push-Up",
+    "setNumber": 1,
+    "reps": 15,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 60,
+    "mode": "manual",
+    "completedAt": "2026-10-25T10:47:00.535Z"
+  },
+  {
     "id": 4,
     "userId": 3,
     "userName": "Sanskar",

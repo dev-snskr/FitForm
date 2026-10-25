@@ -32,7 +32,7 @@ interface LogItem {
   formScore: number | null;
   mistakes: string[];
   restSeconds: number;
-  mode: 'live_camera' | 'video_upload';
+  mode: 'live_camera' | 'video_upload' | 'manual';
   completedAt: string;
 }
 
@@ -380,7 +380,9 @@ export default function LogsPage() {
                             {Math.round(log.formScore)}%
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-[11px]">N/A</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px] font-medium italic">
+                            Not scored
+                          </span>
                         )}
                       </td>
 
@@ -397,6 +399,10 @@ export default function LogsPage() {
                               </span>
                             ))}
                           </div>
+                        ) : log.formScore === null ? (
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px]">
+                            —
+                          </span>
                         ) : (
                           <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -417,6 +423,11 @@ export default function LogsPage() {
                             <>
                               <Camera className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
                               <span>Live Camera</span>
+                            </>
+                          ) : log.mode === 'manual' ? (
+                            <>
+                              <ClipboardList className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                              <span>Manual</span>
                             </>
                           ) : (
                             <>
