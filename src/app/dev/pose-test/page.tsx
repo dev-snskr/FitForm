@@ -43,7 +43,11 @@ export default function PoseTestPage() {
 
   // Re-create analyzer when scenario changes
   useEffect(() => {
-    const analyzer = createExerciseAnalyzer(scenario.exerciseId, { arm: 'right' });
+    const analyzer = createExerciseAnalyzer(scenario.exerciseId, {
+      arm: 'right',
+      leg: 'auto',
+      targetSeconds: 45,
+    });
     analyzerRef.current = analyzer;
     setCurrentFrameIndex(0);
     setIsPlaying(false);
@@ -94,7 +98,11 @@ export default function PoseTestPage() {
   const stepToFrame = (targetIndex: number) => {
     if (targetIndex < 0 || targetIndex >= scenario.frames.length) return;
 
-    const analyzer = createExerciseAnalyzer(scenario.exerciseId, { arm: 'right' });
+    const analyzer = createExerciseAnalyzer(scenario.exerciseId, {
+      arm: 'right',
+      leg: 'auto',
+      targetSeconds: 45,
+    });
     analyzerRef.current = analyzer;
     let res = null;
     if (analyzer) {

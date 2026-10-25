@@ -241,8 +241,48 @@ export default function CameraWorkoutPage() {
    - 22 Vitest unit tests in [`tests/exerciseAnalyzers.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/exerciseAnalyzers.test.ts) and [`tests/squatDetector.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/squatDetector.test.ts) covering perfect reps, shallow depths, sagging hips, swinging torsos, fast tempos, plank holds, and edge cases.
    - Developer Simulation Studio at [`/dev/pose-test`](file:///c:/Users/Sanskar/Desktop/cep2/src/app/dev/pose-test/page.tsx) upgraded with 14 synthetic scenarios across all supported exercises with visual playback, scrubbing, and test logging.
 
-### Step 3B-2 – Form Checking for Lunge & Forearm Plank (UPCOMING)
-- MediaPipe Pose form checking for: Walking/Static Lunge, Forearm Plank.
+### Step 3B-2 – Form Checking for Lunge & Forearm Plank (COMPLETED)
+1. **Lunge Analyzer (`src/lib/pose/analyzers/lungeAnalyzer.ts`)**
+   - Side-view camera placement guide: *"Stand side-on, 2 to 3 metres away, full body visible, with room to step forward"*.
+   - Intelligent front-leg detection: auto-determines front leg by comparing ankle positions in facing direction, with an on-screen toggle pill (`[Auto | Left | Right]`) for manual override.
+   - Rep counting: triggers on descent below 140°, counts 1 rep when front knee bends below ~100° and person returns to standing (>155°).
+   - Biomechanical mistake detection:
+     - *"Not deep enough"*: Lowest knee angle fails to reach below 100° (-25 pts).
+     - *"Leaning too far forward"*: Torso forward lean angle exceeds 25° from vertical (-20 pts).
+     - *"Knee too far past your toes"*: Evaluated when foot landmark confidence $\ge 0.75$ (-15 pts).
+     - *"Too fast"*: Descent completed in under 850ms (-15 pts).
+   - Inactivity auto-finish: completes set after 8 seconds of stationary standing once $\ge 1$ rep is recorded.
+
+2. **Forearm Plank Analyzer (`src/lib/pose/analyzers/plankAnalyzer.ts`)**
+   - Side-view camera placement guide: *"Place the camera low and side-on, 2 metres away, whole body visible"*.
+   - Stability gatekeeper: requires maintaining a stable plank posture for 2.0 seconds before starting the timer, avoiding false starts.
+   - Large live timer displaying active hold seconds against target duration from the plan (e.g. `24s / 45s`).
+   - Biomechanical alignment & mistakes:
+     - Evaluates shoulder-hip-ankle collinearity (target $\ge 165^\circ$).
+     - *"Hips sagging"*: Hip drops below the shoulder-ankle plane (-20 pts).
+     - *"Hips too high"*: Hip pikes above the shoulder-ankle plane (-20 pts).
+     - *"Head dropping"*: Nose drops $>12$ cm below shoulder line when head confidence $\ge 0.75$ (-10 pts).
+   - Live hold-quality scoring: percentage of hold time maintained in clean form scaled to 100.
+   - Auto-finish: completes automatically when target hold time is reached or after a 3.0s dismount window when user stands up or leaves the frame.
+
+3. **Database Schema & Timed Hold Logging Migration**
+   - Non-destructive SQLite migration adding optional `durationSeconds Int?` to `WorkoutLog` in Prisma schema, preserving all existing rows.
+   - Dedicated timed hold logging: plank sets record duration in `durationSeconds` with reps set to 0.
+   - UI formatting across `/logs`: plank logs display hold time formatted in seconds (e.g. `"45 s"`) with a dedicated "Reps / Hold" table header.
+   - File synchronization: `data/workout_logs.json` automatically writes `durationSeconds`.
+   - Data exports: CSV export includes dedicated `Duration (s)` column; JSON export includes `durationSeconds`. Full backward compatibility maintained for older logs.
+
+4. **Universal Workout Flow Wiring**
+   - All 5 primary exercises (**Squat**, **Push-Up**, **Bicep Curl**, **Lunge**, **Plank**) are now fully unlocked with the Live Camera.
+   - Auxiliary exercises (jumping jacks, glute bridge, mountain climbers) remain safely on manual logging.
+   - Set completion card displays hold time in seconds for timed exercises, and reps for rep-based exercises.
+
+5. **Testing Suite Expansion**
+   - 33 comprehensive Vitest tests passing with 0 failures (`tests/exerciseAnalyzers.test.ts` & `tests/squatDetector.test.ts`).
+   - Synthetic test sequences in `src/lib/pose/syntheticData.ts` and `/dev/pose-test` covering:
+     - Lunge: Perfect rep, shallow descent, forward torso lean, fast descent.
+     - Plank: 2.0s stability hold, clean hold, sagging hips, early dismount.
+   - Verified backward compatibility across Squat, Push-Up, Bicep Curl, Diet Planner, and Timeline.
 
 ### Step 4 – Voice Corrections + Rest Timer
 - Audio feedback for form mistakes.
@@ -318,6 +358,7 @@ export default function CameraWorkoutPage() {
 | exercise       | String   |
 | setNumber      | Int      |
 | reps           | Int      |
+| durationSeconds| Int?     |
 | formScore      | Float?   |
 | mistakes       | String   |
 | restSeconds    | Int      |

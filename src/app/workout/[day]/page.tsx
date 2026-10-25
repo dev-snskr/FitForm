@@ -54,6 +54,7 @@ interface SetCompleteSummary {
   exerciseName: string;
   setNumber: number;
   reps: number;
+  durationSeconds?: number | null;
   formScore: number | null;
   mistakes: string[];
   mode: 'live_camera' | 'manual';
@@ -156,7 +157,8 @@ export default function WorkoutSessionPage() {
     reps: number,
     formScore: number | null,
     mistakes: string[],
-    mode: 'live_camera' | 'manual'
+    mode: 'live_camera' | 'manual',
+    durationSeconds?: number | null
   ) => {
     if (!currentExercise || !userId) return;
 
@@ -169,6 +171,7 @@ export default function WorkoutSessionPage() {
         exercise: currentExercise.exerciseName,
         setNumber: currentSetNumber,
         reps,
+        durationSeconds: durationSeconds ?? null,
         formScore,
         mistakes,
         restSeconds: currentExercise.restSeconds || 60,
@@ -191,6 +194,7 @@ export default function WorkoutSessionPage() {
         exerciseName: currentExercise.exerciseName,
         setNumber: currentSetNumber,
         reps,
+        durationSeconds: durationSeconds ?? null,
         formScore,
         mistakes,
         mode,
@@ -207,16 +211,27 @@ export default function WorkoutSessionPage() {
   // Live Camera set finished callback
   const handleCameraSetCompleted = (result: {
     reps: number;
+    durationSeconds?: number | null;
     formScore: number;
     mistakes: string[];
   }) => {
-    recordSetLog(result.reps, result.formScore, result.mistakes, 'live_camera');
+    recordSetLog(
+      result.reps,
+      result.formScore,
+      result.mistakes,
+      'live_camera',
+      result.durationSeconds
+    );
   };
 
   // Manual set logged callback
   const handleManualSetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    recordSetLog(manualReps, null, [], 'manual');
+    if (currentExercise?.durationSecs) {
+      recordSetLog(0, null, [], 'manual', manualReps);
+    } else {
+      recordSetLog(manualReps, null, [], 'manual', null);
+    }
   };
 
   // Advance to next set or next exercise
@@ -363,10 +378,12 @@ export default function WorkoutSessionPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
             <div className="p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center">
               <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                {completedSetSummary.reps}
+                {completedSetSummary.durationSeconds
+                  ? `${completedSetSummary.durationSeconds} s`
+                  : completedSetSummary.reps}
               </div>
               <div className="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">
-                Reps Logged
+                {completedSetSummary.durationSeconds ? 'Hold Time' : 'Reps Logged'}
               </div>
             </div>
 
@@ -436,6 +453,7 @@ export default function WorkoutSessionPage() {
           onSetCompleted={handleCameraSetCompleted}
           onCancel={() => setIsCameraActive(false)}
           targetReps={currentExercise.reps || 12}
+          targetDurationSecs={currentExercise.durationSecs}
           setNumber={currentSetNumber}
         />
       )}

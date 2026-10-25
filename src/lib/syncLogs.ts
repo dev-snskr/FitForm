@@ -14,10 +14,11 @@ export interface FormattedWorkoutLog {
   exercise: string;
   setNumber: number;
   reps: number;
+  durationSeconds?: number | null;
   formScore: number | null;
   mistakes: string[];
   restSeconds: number;
-  mode: 'live_camera' | 'video_upload';
+  mode: 'live_camera' | 'video_upload' | 'manual';
   completedAt: string;
 }
 
@@ -39,6 +40,14 @@ export async function syncWorkoutLogsToJson(): Promise<FormattedWorkoutLog[]> {
         }
       }
 
+      const isPlank = log.exercise.toLowerCase().includes('plank');
+      const durationSeconds =
+        log.durationSeconds !== null && log.durationSeconds !== undefined
+          ? log.durationSeconds
+          : isPlank
+          ? log.reps
+          : null;
+
       return {
         id: log.id,
         userId: log.userId,
@@ -46,11 +55,12 @@ export async function syncWorkoutLogsToJson(): Promise<FormattedWorkoutLog[]> {
         dayNumber: log.dayNumber,
         exercise: log.exercise,
         setNumber: log.setNumber,
-        reps: log.reps,
+        reps: isPlank ? 0 : log.reps,
+        durationSeconds,
         formScore: log.formScore,
         mistakes: parsedMistakes,
         restSeconds: log.restSeconds,
-        mode: log.mode as 'live_camera' | 'video_upload',
+        mode: log.mode as 'live_camera' | 'video_upload' | 'manual',
         completedAt: log.completedAt.toISOString(),
       };
     });

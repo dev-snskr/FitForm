@@ -2,13 +2,14 @@
 
 // FitForm Universal Live Camera Form Checker Component
 // Multi-exercise pose estimation via MediaPipe Tasks Vision (zero CDN dependency).
-// Supports: Bodyweight Squat, Push-Up, Bicep Curl.
+// Supports: Bodyweight Squat, Push-Up, Bicep Curl, Walking/Static Lunge, Forearm Plank.
 // Features:
 // - Universal exercise plug-in architecture with automatic biomechanical analyzer resolution.
 // - Interactive Left/Right arm selector for Bicep Curl (persisted to localStorage).
-// - Plank stability 1.5s detection indicator for Push-Up.
+// - Interactive Auto/Left/Right leg selector for Lunge (persisted to localStorage).
+// - 2.0s plank stability detection & large live hold timer with target seconds for Plank.
 // - Real-time skeleton overlay, dynamic border glow (good/warning/bad).
-// - Real-time joint angle meters, auto-finish on 8s inactivity after >= 1 rep.
+// - Real-time joint angle meters, auto-finish on inactivity or target completion.
 // - Privacy guarantee: "Your camera video stays on your device."
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -23,6 +24,7 @@ import {
   Loader2,
   Lock,
   Timer,
+  Clock,
 } from 'lucide-react';
 import { createExerciseAnalyzer, resolveExerciseId } from '@/lib/pose/analyzers/registry';
 import { IExerciseAnalyzer, ExerciseAnalysisResult } from '@/lib/pose/types';
@@ -33,11 +35,13 @@ interface LiveExerciseCameraProps {
   exerciseName: string;
   onSetCompleted: (result: {
     reps: number;
+    durationSeconds?: number | null;
     formScore: number;
     mistakes: string[];
   }) => void;
   onCancel: () => void;
   targetReps: number;
+  targetDurationSecs?: number | null;
   setNumber: number;
 }
 
@@ -46,6 +50,7 @@ export default function LiveExerciseCamera({
   onSetCompleted,
   onCancel,
   targetReps,
+  targetDurationSecs,
   setNumber,
 }: LiveExerciseCameraProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -56,8 +61,12 @@ export default function LiveExerciseCamera({
   const [isTrackingActive, setIsTrackingActive] = useState(false);
   const [analysis, setAnalysis] = useState<ExerciseAnalysisResult | null>(null);
 
+  const exerciseId = resolveExerciseId(exerciseName);
+  const isBicepCurl = exerciseId === 'bicep_curl';
+  const isLunge = exerciseId === 'lunge';
+  const isPlank = exerciseId === 'plank';
+
   // Arm selection for bicep curl (remembered in localStorage)
-  const isBicepCurl = resolveExerciseId(exerciseName) === 'bicep_curl';
   const [bicepArm, setBicepArm] = useState<'left' | 'right'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('fitform_bicep_arm');
@@ -66,17 +75,30 @@ export default function LiveExerciseCamera({
     return 'right';
   });
 
+  // Leg selection for lunge (remembered in localStorage)
+  const [lungeLeg, setLungeLeg] = useState<'auto' | 'left' | 'right'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('fitform_lunge_leg');
+      if (saved === 'auto' || saved === 'left' || saved === 'right') return saved;
+    }
+    return 'auto';
+  });
+
   // Analyzer reference
   const analyzerRef = useRef<IExerciseAnalyzer | null>(null);
 
   // Initialize analyzer
   useEffect(() => {
-    const analyzer = createExerciseAnalyzer(exerciseName, { arm: bicepArm });
+    const analyzer = createExerciseAnalyzer(exerciseName, {
+      arm: bicepArm,
+      leg: lungeLeg,
+      targetSeconds: targetDurationSecs || 45,
+    });
     analyzerRef.current = analyzer;
     return () => {
       analyzerRef.current = null;
     };
-  }, [exerciseName, bicepArm]);
+  }, [exerciseName, bicepArm, lungeLeg, targetDurationSecs]);
 
   // Handle switching arms
   const handleToggleArm = (arm: 'left' | 'right') => {
@@ -86,6 +108,17 @@ export default function LiveExerciseCamera({
     }
     if (analyzerRef.current && analyzerRef.current.setArmChoice) {
       analyzerRef.current.setArmChoice(arm);
+    }
+  };
+
+  // Handle switching lunge leg
+  const handleToggleLeg = (leg: 'auto' | 'left' | 'right') => {
+    setLungeLeg(leg);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fitform_lunge_leg', leg);
+    }
+    if (analyzerRef.current && analyzerRef.current.setLegChoice) {
+      analyzerRef.current.setLegChoice(leg);
     }
   };
 
@@ -107,7 +140,7 @@ export default function LiveExerciseCamera({
   const handleFinishSet = useCallback(() => {
     const analyzer = analyzerRef.current;
     if (!analyzer) {
-      onSetCompleted({ reps: 0, formScore: 100, mistakes: [] });
+      onSetCompleted({ reps: 0, durationSeconds: null, formScore: 100, mistakes: [] });
       return;
     }
 
@@ -115,12 +148,24 @@ export default function LiveExerciseCamera({
     const finalScore = analyzer.getTotalScore();
     const mistakes = analyzer.getMistakesSummary();
 
-    onSetCompleted({
-      reps,
-      formScore: finalScore,
-      mistakes,
-    });
-  }, [onSetCompleted]);
+    if (analyzer.isTimedHold) {
+      const holdSecs =
+        analyzer.getHoldDurationSeconds?.() ?? analysis?.holdDurationSeconds ?? 0;
+      onSetCompleted({
+        reps: 0,
+        durationSeconds: holdSecs,
+        formScore: finalScore,
+        mistakes,
+      });
+    } else {
+      onSetCompleted({
+        reps,
+        durationSeconds: null,
+        formScore: finalScore,
+        mistakes,
+      });
+    }
+  }, [onSetCompleted, analysis]);
 
   // 1. Initialize MediaPipe PoseLandmarker from local public folder
   useEffect(() => {
@@ -405,6 +450,29 @@ export default function LiveExerciseCamera({
             </div>
           )}
 
+          {/* Lunge Front Leg Selector */}
+          {isLunge && (
+            <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-white/10">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase px-1">
+                Front Leg:
+              </span>
+              {(['auto', 'left', 'right'] as const).map((leg) => (
+                <button
+                  key={leg}
+                  type="button"
+                  onClick={() => handleToggleLeg(leg)}
+                  className={`px-2 py-0.5 rounded-lg text-xs font-bold capitalize transition ${
+                    lungeLeg === leg
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-indigo-500'
+                  }`}
+                >
+                  {leg}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="inline-flex items-center space-x-1.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
             <Lock className="w-3.5 h-3.5 text-indigo-500" />
             <span>Your camera video stays on your device</span>
@@ -513,6 +581,29 @@ export default function LiveExerciseCamera({
                   </div>
                 )}
 
+              {/* Plank 2.0s Stability Hold Countdown Overlay */}
+              {analysis &&
+                analysis.exerciseId === 'plank' &&
+                !analysis.isReady &&
+                analysis.isBodyInFrame &&
+                !isLoadingModel &&
+                !cameraError && (
+                  <div className="absolute inset-x-8 bottom-6 z-20 p-4 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 text-center text-white shadow-xl">
+                    <div className="flex items-center justify-center space-x-2 text-xs font-bold text-cyan-400 mb-2">
+                      <Clock className="w-4 h-4 animate-pulse" />
+                      <span>{analysis.latestMistake || 'Hold plank position for 2s to start timer'}</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden max-w-xs mx-auto border border-white/10">
+                      <div
+                        className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-all duration-150"
+                        style={{
+                          width: `${Math.round((analysis.readyProgress || 0) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
               {/* Body Out of Frame Warning */}
               {analysis &&
                 !analysis.isBodyInFrame &&
@@ -542,7 +633,11 @@ export default function LiveExerciseCamera({
               className="flex-1 max-w-xs inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold transition shadow-lg shadow-indigo-600/30 cursor-pointer active:scale-98"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Finish Set ({analysis?.repCount || 0} reps)</span>
+              <span>
+                {isPlank
+                  ? `Finish Set (${analysis?.holdDurationSeconds || 0}s hold)`
+                  : `Finish Set (${analysis?.repCount || 0} reps)`}
+              </span>
             </button>
           </div>
         </div>
@@ -558,19 +653,33 @@ export default function LiveExerciseCamera({
               </span>
             </div>
 
-            {/* Rep Counter & Form Score */}
+            {/* Rep Counter or Large Hold Timer */}
             <div className="grid grid-cols-2 gap-4 text-center mb-6">
-              <div className="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/5">
-                <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">
-                  {analysis?.repCount || 0}
-                  <span className="text-xs text-slate-400 font-normal ml-1">
-                    / {targetReps}
-                  </span>
+              {isPlank ? (
+                <div className="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/5">
+                  <div className="text-4xl font-black text-cyan-600 dark:text-cyan-400">
+                    {analysis?.holdDurationSeconds || 0}s
+                    <span className="text-xs text-slate-400 font-normal ml-1">
+                      / {targetDurationSecs || 45}s
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
+                    Hold Time
+                  </div>
                 </div>
-                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
-                  Reps Completed
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/5">
+                  <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">
+                    {analysis?.repCount || 0}
+                    <span className="text-xs text-slate-400 font-normal ml-1">
+                      / {targetReps}
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-1">
+                    Reps Completed
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-white/5">
                 <div

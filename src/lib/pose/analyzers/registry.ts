@@ -5,6 +5,8 @@ import { ExerciseId, IExerciseAnalyzer } from '../types';
 import { SquatAnalyzer } from './squatAnalyzer';
 import { PushUpAnalyzer } from './pushUpAnalyzer';
 import { BicepCurlAnalyzer } from './bicepCurlAnalyzer';
+import { LungeAnalyzer } from './lungeAnalyzer';
+import { PlankAnalyzer } from './plankAnalyzer';
 import { EXERCISE_CONFIGS } from '../exerciseConfig';
 
 /**
@@ -31,6 +33,12 @@ export function resolveExerciseId(nameOrId: string): ExerciseId | null {
   ) {
     return 'bicep_curl';
   }
+  if (normalized.includes('lunge')) {
+    return 'lunge';
+  }
+  if (normalized.includes('plank')) {
+    return 'plank';
+  }
 
   return null;
 }
@@ -47,7 +55,11 @@ export function isExerciseFormTrackable(nameOrId: string): boolean {
  */
 export function createExerciseAnalyzer(
   nameOrId: string,
-  options?: { arm?: 'left' | 'right' }
+  options?: {
+    arm?: 'left' | 'right';
+    leg?: 'auto' | 'left' | 'right';
+    targetSeconds?: number;
+  }
 ): IExerciseAnalyzer | null {
   const exerciseId = resolveExerciseId(nameOrId);
   if (!exerciseId) return null;
@@ -59,6 +71,10 @@ export function createExerciseAnalyzer(
       return new PushUpAnalyzer();
     case 'bicep_curl':
       return new BicepCurlAnalyzer(options?.arm || 'right');
+    case 'lunge':
+      return new LungeAnalyzer(options?.leg || 'auto');
+    case 'plank':
+      return new PlankAnalyzer(options?.targetSeconds || 45);
   }
 }
 
@@ -73,5 +89,9 @@ export function getExerciseSetupGuide(exerciseId: ExerciseId): string {
       return EXERCISE_CONFIGS.push_up.SETUP_GUIDE;
     case 'bicep_curl':
       return EXERCISE_CONFIGS.bicep_curl.SETUP_GUIDE;
+    case 'lunge':
+      return EXERCISE_CONFIGS.lunge.SETUP_GUIDE;
+    case 'plank':
+      return EXERCISE_CONFIGS.plank.SETUP_GUIDE;
   }
 }

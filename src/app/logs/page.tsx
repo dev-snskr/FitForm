@@ -29,6 +29,7 @@ interface LogItem {
   exercise: string;
   setNumber: number;
   reps: number;
+  durationSeconds?: number | null;
   formScore: number | null;
   mistakes: string[];
   restSeconds: number;
@@ -107,13 +108,15 @@ export default function LogsPage() {
       const sample = sampleExercises[Math.floor(Math.random() * sampleExercises.length)];
       const randomScore = Math.floor(Math.random() * 15) + 85;
 
+      const isPlank = sample.name.toLowerCase().includes('plank');
       const payload = {
         userId,
         userName,
         dayNumber: sample.day,
         exercise: sample.name,
         setNumber: 1,
-        reps: 12,
+        reps: isPlank ? 0 : 12,
+        durationSeconds: isPlank ? 45 : null,
         formScore: randomScore,
         mistakes: sample.mistakes,
         restSeconds: 45,
@@ -310,7 +313,7 @@ export default function LogsPage() {
                   <th className="py-3.5 px-4">Day</th>
                   <th className="py-3.5 px-4">Exercise</th>
                   <th className="py-3.5 px-4 text-center">Set</th>
-                  <th className="py-3.5 px-4 text-center">Reps</th>
+                  <th className="py-3.5 px-4 text-center">Reps / Hold</th>
                   <th className="py-3.5 px-4 text-center">Score</th>
                   <th className="py-3.5 px-4">Detected Mistakes</th>
                   <th className="py-3.5 px-4 text-center">Rest</th>
@@ -360,9 +363,13 @@ export default function LogsPage() {
                         #{log.setNumber}
                       </td>
 
-                      {/* Reps */}
+                      {/* Reps / Hold */}
                       <td className="py-3.5 px-4 text-center font-bold text-indigo-600 dark:text-indigo-300">
-                        {log.reps}
+                        {log.durationSeconds !== undefined && log.durationSeconds !== null
+                          ? `${log.durationSeconds} s`
+                          : log.exercise.toLowerCase().includes('plank')
+                          ? `${log.reps} s`
+                          : log.reps}
                       </td>
 
                       {/* Form Score */}

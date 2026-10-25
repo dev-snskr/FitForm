@@ -127,7 +127,7 @@ export function calculatePlankAlignment(
   const signedSag = cross * orientation;
 
   let deviation: 'sagging' | 'high' | 'neutral' = 'neutral';
-  if (angle < 160) {
+  if (angle < 165) {
     deviation = signedSag > 0 ? 'sagging' : 'high';
   }
 

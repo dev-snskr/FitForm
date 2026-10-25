@@ -125,8 +125,79 @@ export const BICEP_CURL_CONFIG = {
   },
 };
 
+export const LUNGE_CONFIG = {
+  // 1. Angle Thresholds (in degrees)
+  STANDING_KNEE_ANGLE_MIN: 155, // Upright standing before and after lunge step
+  LUNGE_TRIGGER_ANGLE: 140, // Front knee bending below this initiates descent
+  LUNGE_DEPTH_KNEE_ANGLE_MAX: 100, // Front knee must reach below ~100 degrees
+  SHALLOW_LUNGE_DEPTH_LIMIT: 110, // Failing to reach below 105-110 degrees flags "Not deep enough"
+  MAX_TORSO_FORWARD_LEAN_DEG: 25, // Torso lean exceeding ~25 degrees flags "Leaning too far forward"
+  MAX_KNEE_PAST_TOE_RATIO: 0.12, // Evaluated when foot landmark confidence is high
+
+  // 2. Timing Thresholds (in milliseconds)
+  MIN_DESCENT_DURATION_MS: 850, // Lunge drop faster than 850ms flags "Too fast"
+  AUTO_FINISH_INACTIVITY_MS: 8000,
+  TARGET_FRAME_INTERVAL_MS: 50,
+
+  // 3. Landmark Visibility
+  MIN_KEYPOINT_VISIBILITY: 0.55,
+  MIN_FOOT_VISIBILITY_FOR_BALANCE: 0.75,
+
+  // 4. Scoring Deductions
+  DEDUCTIONS: {
+    NOT_DEEP_ENOUGH: 25,
+    LEANING_FORWARD: 20,
+    KNEE_PAST_TOES: 15,
+    TOO_FAST: 15,
+  },
+
+  // 5. Setup Guide & Messages
+  SETUP_GUIDE:
+    'Stand side-on, 2 to 3 metres away, full body visible, with room to step forward.',
+  MESSAGES: {
+    READY: 'Ready · Step forward into lunge',
+    CLEAN_FORM: 'Great lunge! Keep your chest proud.',
+    NOT_DEEP_ENOUGH: 'Not deep enough',
+    LEANING_FORWARD: 'Leaning too far forward',
+    KNEE_PAST_TOES: 'Knee too far past your toes',
+    TOO_FAST: 'Too fast',
+    OUT_OF_FRAME: "Step back, we can't see your full body",
+  },
+};
+
+export const PLANK_CONFIG = {
+  // 1. Angle Thresholds (in degrees)
+  BODY_ALIGNMENT_MIN_ANGLE: 165, // Straight shoulder-hip-ankle line (must be ~165° or more)
+  PLANK_HORIZONTAL_TOLERANCE_DEG: 45, // Torso orientation prone on floor
+
+  // 2. Timing Thresholds (in milliseconds)
+  STABILITY_HOLD_START_MS: 2000, // Must hold stable plank for 2.0s before timer begins
+  DEFAULT_TARGET_SECONDS: 45,
+  DISMOUNT_INACTIVITY_LIMIT_MS: 3000, // Dismounting plank for >3s ends set
+  TARGET_FRAME_INTERVAL_MS: 50,
+
+  // 3. Landmark Visibility
+  MIN_KEYPOINT_VISIBILITY: 0.55,
+  MIN_HEAD_VISIBILITY: 0.75,
+
+  // 4. Setup Guide & Messages
+  SETUP_GUIDE:
+    'Place the camera low and side-on, 2 metres away, whole body visible.',
+  MESSAGES: {
+    HOLD_PLANK: 'Hold plank position for 2s to start timer',
+    HOLDING_GOOD: 'Solid plank! Keep core locked.',
+    HIPS_SAGGING: 'Hips sagging',
+    HIPS_TOO_HIGH: 'Hips too high',
+    HEAD_DROPPING: 'Head dropping',
+    COMPLETED: 'Target hold time reached!',
+    OUT_OF_FRAME: "Place camera low and step back to keep whole body in frame",
+  },
+};
+
 export const EXERCISE_CONFIGS = {
   squat: SQUAT_CONFIG,
   push_up: PUSH_UP_CONFIG,
   bicep_curl: BICEP_CURL_CONFIG,
+  lunge: LUNGE_CONFIG,
+  plank: PLANK_CONFIG,
 };

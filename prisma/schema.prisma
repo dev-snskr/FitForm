@@ -53,19 +53,20 @@ model DayExercise {
 }
 
 model WorkoutLog {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userName    String
-  dayNumber   Int
-  exercise    String
-  setNumber   Int
-  reps        Int
-  formScore   Float?
-  mistakes    String   // JSON string or comma-separated list of mistakes
-  restSeconds Int
-  mode        String   // "live_camera" or "video_upload"
-  completedAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName        String
+  dayNumber       Int
+  exercise        String
+  setNumber       Int
+  reps            Int
+  durationSeconds Int?     // Duration in seconds for timed exercises (e.g. Plank)
+  formScore       Float?
+  mistakes        String   // JSON string or comma-separated list of mistakes
+  restSeconds     Int
+  mode            String   // "live_camera", "manual", or "video_upload"
+  completedAt     DateTime @default(now())
 }
 
 model DietPlan {

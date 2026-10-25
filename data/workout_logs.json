@@ -1,5 +1,178 @@
 [
   {
+    "id": 40,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 5,
+    "exercise": "Forearm Plank",
+    "setNumber": 1,
+    "reps": 0,
+    "durationSeconds": 45,
+    "formScore": 92,
+    "mistakes": [
+      "Hips sagged slightly at 35s"
+    ],
+    "restSeconds": 45,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T14:02:19.527Z"
+  },
+  {
+    "id": 39,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 4,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 1,
+    "reps": 10,
+    "durationSeconds": null,
+    "formScore": 95,
+    "mistakes": [],
+    "restSeconds": 60,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T14:02:19.492Z"
+  },
+  {
+    "id": 38,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 5,
+    "exercise": "Forearm Plank",
+    "setNumber": 1,
+    "reps": 0,
+    "durationSeconds": 45,
+    "formScore": 92,
+    "mistakes": [
+      "Hips sagged slightly at 35s"
+    ],
+    "restSeconds": 45,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T14:01:51.501Z"
+  },
+  {
+    "id": 37,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 4,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 1,
+    "reps": 10,
+    "durationSeconds": null,
+    "formScore": 95,
+    "mistakes": [],
+    "restSeconds": 60,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T14:01:51.460Z"
+  },
+  {
+    "id": 36,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 10,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:39:23.458Z"
+  },
+  {
+    "id": 35,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Bicep Curl",
+    "setNumber": 1,
+    "reps": 19,
+    "durationSeconds": null,
+    "formScore": 76,
+    "mistakes": [
+      "Not curling high enough",
+      "Swinging your body",
+      "Too fast"
+    ],
+    "restSeconds": 150,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T13:38:57.902Z"
+  },
+  {
+    "id": 34,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 5,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:37:18.357Z"
+  },
+  {
+    "id": 33,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 4,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:37:14.322Z"
+  },
+  {
+    "id": 32,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 3,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:37:10.534Z"
+  },
+  {
+    "id": 31,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 2,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:37:07.339Z"
+  },
+  {
+    "id": 30,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 6,
+    "exercise": "Walking / Static Lunge",
+    "setNumber": 1,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T13:37:01.390Z"
+  },
+  {
     "id": 29,
     "userId": 3,
     "userName": "Sanskar",
@@ -7,6 +180,7 @@
     "exercise": "Bicep Curl",
     "setNumber": 3,
     "reps": 14,
+    "durationSeconds": null,
     "formScore": 80,
     "mistakes": [
       "Swinging your body"
@@ -23,6 +197,7 @@
     "exercise": "Push-Up",
     "setNumber": 2,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": 85,
     "mistakes": [
       "Go lower"
@@ -39,6 +214,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": 92,
     "mistakes": [
       "Not deep enough"
@@ -55,6 +231,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 2,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -69,6 +246,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": 93,
     "mistakes": [
       "Too fast — control your descent",
@@ -86,6 +264,7 @@
     "exercise": "Push-Up",
     "setNumber": 1,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -100,6 +279,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 5,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -114,6 +294,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 4,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -128,6 +309,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 3,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -142,6 +324,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 2,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -156,6 +339,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 0,
+    "durationSeconds": null,
     "formScore": 100,
     "mistakes": [],
     "restSeconds": 150,
@@ -170,6 +354,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 0,
+    "durationSeconds": null,
     "formScore": 100,
     "mistakes": [],
     "restSeconds": 150,
@@ -184,6 +369,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 0,
+    "durationSeconds": null,
     "formScore": 100,
     "mistakes": [],
     "restSeconds": 150,
@@ -198,6 +384,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 0,
+    "durationSeconds": null,
     "formScore": 100,
     "mistakes": [],
     "restSeconds": 150,
@@ -212,6 +399,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 11,
+    "durationSeconds": null,
     "formScore": 83,
     "mistakes": [
       "Too fast — control your descent",
@@ -229,6 +417,7 @@
     "exercise": "Walking / Static Lunge",
     "setNumber": 5,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -243,6 +432,7 @@
     "exercise": "Walking / Static Lunge",
     "setNumber": 4,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -257,6 +447,7 @@
     "exercise": "Walking / Static Lunge",
     "setNumber": 3,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -271,6 +462,7 @@
     "exercise": "Walking / Static Lunge",
     "setNumber": 2,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -285,6 +477,7 @@
     "exercise": "Walking / Static Lunge",
     "setNumber": 1,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 150,
@@ -299,6 +492,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 2,
+    "durationSeconds": null,
     "formScore": 75,
     "mistakes": [
       "Not deep enough"
@@ -315,6 +509,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 2,
+    "durationSeconds": null,
     "formScore": 75,
     "mistakes": [
       "Not deep enough"
@@ -331,6 +526,7 @@
     "exercise": "Push-Up",
     "setNumber": 2,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": 94,
     "mistakes": [
       "Keep elbows tucked at 45 degrees"
@@ -347,6 +543,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": 92,
     "mistakes": [
       "Not deep enough on rep 8"
@@ -363,6 +560,7 @@
     "exercise": "Push-Up",
     "setNumber": 1,
     "reps": 15,
+    "durationSeconds": null,
     "formScore": null,
     "mistakes": [],
     "restSeconds": 60,
@@ -377,6 +575,7 @@
     "exercise": "Push-Up",
     "setNumber": 2,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": 94,
     "mistakes": [
       "Keep elbows tucked at 45 degrees"
@@ -393,6 +592,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 12,
+    "durationSeconds": null,
     "formScore": 92,
     "mistakes": [
       "Knees caved slightly inward on rep 10"
@@ -409,6 +609,7 @@
     "exercise": "Push-Up",
     "setNumber": 1,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": 96,
     "mistakes": [],
     "restSeconds": 150,
@@ -423,6 +624,7 @@
     "exercise": "Bodyweight Squat",
     "setNumber": 1,
     "reps": 10,
+    "durationSeconds": null,
     "formScore": 94.5,
     "mistakes": [
       "Knees slight valgus on rep 8"

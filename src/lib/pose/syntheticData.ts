@@ -219,6 +219,170 @@ export function createBicepCurlSkeleton(
   return points;
 }
 
+/**
+ * Creates a base 33-landmark skeleton in a lunge posture.
+ * Facing right (+X). Right leg is in front by default (higher ankle.x).
+ */
+export function createLungeSkeleton(
+  frontKneeAngleDeg: number = 170,
+  torsoLeanDeg: number = 8,
+  kneePastToeDelta: number = 0,
+  isRightFront: boolean = true,
+  visibility: number = 0.95
+): LandmarkPoint[] {
+  const points: LandmarkPoint[] = Array(33)
+    .fill(null)
+    .map(() => ({ x: 0.5, y: 0.5, z: 0, visibility }));
+
+  const L1 = 0.22; // shin
+  const L2 = 0.23; // thigh
+  const L3 = 0.28; // torso
+
+  // Front ankle & toe
+  const frontAnkleX = 0.62;
+  const frontAnkleY = 0.82;
+  const frontToeX = 0.72;
+  const frontToeY = 0.84;
+
+  // Front knee position based on knee flexion
+  const kneeBend = Math.max(0, 180 - frontKneeAngleDeg);
+  const shinTiltDeg = 6 + (kneeBend / 90) * 12;
+  const shinTiltRad = (shinTiltDeg * Math.PI) / 180;
+
+  const frontKneeX = frontAnkleX + L1 * Math.sin(shinTiltRad) + kneePastToeDelta;
+  const frontKneeY = frontAnkleY - L1 * Math.cos(shinTiltRad);
+
+  // Exact angle at knee vertex: angle between K->A and K->H
+  const angleKA = Math.atan2(frontAnkleY - frontKneeY, frontAnkleX - frontKneeX);
+  const angleKH = angleKA + (frontKneeAngleDeg * Math.PI) / 180;
+
+  const frontHipX = frontKneeX + L2 * Math.cos(angleKH);
+  const frontHipY = frontKneeY + L2 * Math.sin(angleKH);
+
+  // Torso position
+  const torsoRad = (torsoLeanDeg * Math.PI) / 180;
+  const shoulderX = frontHipX + L3 * Math.sin(torsoRad);
+  const shoulderY = frontHipY - L3 * Math.cos(torsoRad);
+
+  // Back leg
+  const backAnkleX = frontHipX - 0.28;
+  const backAnkleY = 0.82;
+  const backToeX = backAnkleX + 0.08;
+  const backToeY = 0.84;
+  const backKneeX = frontHipX - 0.16;
+  const backKneeY = Math.min(0.80, frontHipY + 0.20);
+
+  const noseX = shoulderX + 0.05;
+  const noseY = shoulderY - 0.08;
+
+  // Assign according to isRightFront
+  const fAnkle = { x: frontAnkleX, y: frontAnkleY, visibility };
+  const fToe = { x: frontToeX, y: frontToeY, visibility };
+  const fKnee = { x: frontKneeX, y: frontKneeY, visibility };
+  const fHip = { x: frontHipX, y: frontHipY, visibility };
+
+  const bAnkle = { x: backAnkleX, y: backAnkleY, visibility: visibility * 0.8 };
+  const bToe = { x: backToeX, y: backToeY, visibility: visibility * 0.8 };
+  const bKnee = { x: backKneeX, y: backKneeY, visibility: visibility * 0.8 };
+  const bHip = { x: frontHipX, y: frontHipY, visibility: visibility * 0.8 };
+
+  const rShoulder = { x: shoulderX, y: shoulderY, visibility };
+  const lShoulder = { x: shoulderX, y: shoulderY, visibility: visibility * 0.8 };
+
+  if (isRightFront) {
+    points[POSE_LANDMARKS.RIGHT_ANKLE] = fAnkle;
+    points[POSE_LANDMARKS.RIGHT_FOOT_INDEX] = fToe;
+    points[POSE_LANDMARKS.RIGHT_KNEE] = fKnee;
+    points[POSE_LANDMARKS.RIGHT_HIP] = fHip;
+    points[POSE_LANDMARKS.RIGHT_SHOULDER] = rShoulder;
+
+    points[POSE_LANDMARKS.LEFT_ANKLE] = bAnkle;
+    points[POSE_LANDMARKS.LEFT_FOOT_INDEX] = bToe;
+    points[POSE_LANDMARKS.LEFT_KNEE] = bKnee;
+    points[POSE_LANDMARKS.LEFT_HIP] = bHip;
+    points[POSE_LANDMARKS.LEFT_SHOULDER] = lShoulder;
+  } else {
+    points[POSE_LANDMARKS.LEFT_ANKLE] = fAnkle;
+    points[POSE_LANDMARKS.LEFT_FOOT_INDEX] = fToe;
+    points[POSE_LANDMARKS.LEFT_KNEE] = fKnee;
+    points[POSE_LANDMARKS.LEFT_HIP] = fHip;
+    points[POSE_LANDMARKS.LEFT_SHOULDER] = rShoulder;
+
+    points[POSE_LANDMARKS.RIGHT_ANKLE] = bAnkle;
+    points[POSE_LANDMARKS.RIGHT_FOOT_INDEX] = bToe;
+    points[POSE_LANDMARKS.RIGHT_KNEE] = bKnee;
+    points[POSE_LANDMARKS.RIGHT_HIP] = bHip;
+    points[POSE_LANDMARKS.RIGHT_SHOULDER] = lShoulder;
+  }
+
+  points[POSE_LANDMARKS.NOSE] = { x: noseX, y: noseY, visibility };
+
+  return points;
+}
+
+/**
+ * Creates a base 33-landmark skeleton in a forearm plank hold position.
+ * Facing left (-X). Head/shoulder at left, toes at right.
+ */
+export function createPlankSkeleton(
+  hipSagOffset: number = 0,
+  headDropOffset: number = 0,
+  visibility: number = 0.95
+): LandmarkPoint[] {
+  const points: LandmarkPoint[] = Array(33)
+    .fill(null)
+    .map(() => ({ x: 0.5, y: 0.5, z: 0, visibility }));
+
+  const elbowX = 0.28;
+  const elbowY = 0.78;
+  const wristX = 0.18;
+  const wristY = 0.78;
+
+  const shoulderX = 0.28;
+  const shoulderY = 0.58;
+
+  const ankleX = 0.82;
+  const ankleY = 0.76;
+  const toeX = 0.86;
+  const toeY = 0.78;
+
+  // Midline between shoulder and ankle
+  const hipBaseX = 0.55;
+  const hipBaseY = shoulderY + (ankleY - shoulderY) * 0.5; // ~0.67
+
+  const hipX = hipBaseX;
+  const hipY = hipBaseY + hipSagOffset;
+
+  const kneeX = 0.68;
+  const kneeY = (hipY + ankleY) / 2;
+
+  const noseX = shoulderX - 0.08;
+  const noseY = shoulderY - 0.02 + headDropOffset;
+
+  // Active right side
+  points[POSE_LANDMARKS.RIGHT_WRIST] = { x: wristX, y: wristY, visibility };
+  points[POSE_LANDMARKS.RIGHT_ELBOW] = { x: elbowX, y: elbowY, visibility };
+  points[POSE_LANDMARKS.RIGHT_SHOULDER] = { x: shoulderX, y: shoulderY, visibility };
+  points[POSE_LANDMARKS.RIGHT_HIP] = { x: hipX, y: hipY, visibility };
+  points[POSE_LANDMARKS.RIGHT_KNEE] = { x: kneeX, y: kneeY, visibility };
+  points[POSE_LANDMARKS.RIGHT_ANKLE] = { x: ankleX, y: ankleY, visibility };
+  points[POSE_LANDMARKS.RIGHT_FOOT_INDEX] = { x: toeX, y: toeY, visibility };
+
+  // Passive left side
+  points[POSE_LANDMARKS.LEFT_WRIST] = { x: wristX, y: wristY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_ELBOW] = { x: elbowX, y: elbowY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_SHOULDER] = { x: shoulderX, y: shoulderY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_HIP] = { x: hipX, y: hipY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_KNEE] = { x: kneeX, y: kneeY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_ANKLE] = { x: ankleX, y: ankleY, visibility: visibility * 0.4 };
+  points[POSE_LANDMARKS.LEFT_FOOT_INDEX] = { x: toeX, y: toeY, visibility: visibility * 0.4 };
+
+  points[POSE_LANDMARKS.NOSE] = { x: noseX, y: noseY, visibility };
+
+  return points;
+}
+
+
 // ============================================================================
 // SQUAT SCENARIOS
 // ============================================================================
@@ -808,6 +972,325 @@ export function generateOutOfFrameScenario(): SyntheticScenario {
   };
 }
 
+// ============================================================================
+// LUNGE SCENARIOS
+// ============================================================================
+
+export function generatePerfectLungeScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  // 1. Standing preparation (10 frames)
+  for (let i = 0; i < 10; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createLungeSkeleton(170, 8),
+      description: 'Standing ready',
+    });
+    t += 50;
+  }
+
+  // 2. Descent: knee bends to 88° (>1000ms duration, lean 12°)
+  for (let i = 0; i < 26; i++) {
+    const angle = 170 - (i / 25) * (170 - 88);
+    const lean = 8 + (i / 25) * 4;
+    frames.push({
+      timestamp: t,
+      landmarks: createLungeSkeleton(angle, lean),
+      description: 'Descending smoothly',
+    });
+    t += 50;
+  }
+
+  // 3. Bottom hold (8 frames)
+  for (let i = 0; i < 8; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createLungeSkeleton(88, 12),
+      description: 'Bottom position (<100°)',
+    });
+    t += 50;
+  }
+
+  // 4. Ascent back to standing (24 frames)
+  for (let i = 0; i < 24; i++) {
+    const angle = 88 + (i / 23) * (170 - 88);
+    const lean = 12 - (i / 23) * 4;
+    frames.push({
+      timestamp: t,
+      landmarks: createLungeSkeleton(angle, lean),
+      description: 'Ascending',
+    });
+    t += 50;
+  }
+
+  // 5. Standing completed
+  for (let i = 0; i < 10; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createLungeSkeleton(170, 8),
+      description: 'Standing complete',
+    });
+    t += 50;
+  }
+
+  return {
+    id: 'lunge_perfect',
+    name: 'Lunge: Perfect Rep',
+    exerciseId: 'lunge',
+    description: 'Front knee bends to 88°, upright torso (12°), controlled tempo (1.3s). 1 rep, score 100.',
+    expectedReps: 1,
+    expectedMistakes: [],
+    expectedMinScore: 100,
+    expectedMaxScore: 100,
+    frames,
+  };
+}
+
+export function generateShallowLungeScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+  // Descent only reaches 118° (does not reach 100°)
+  for (let i = 0; i < 20; i++) {
+    const angle = 170 - (i / 19) * (170 - 118);
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, 10) });
+    t += 50;
+  }
+  for (let i = 0; i < 18; i++) {
+    const angle = 118 + (i / 17) * (170 - 118);
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, 8) });
+    t += 50;
+  }
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+
+  return {
+    id: 'lunge_shallow',
+    name: 'Lunge: Shallow Descent',
+    exerciseId: 'lunge',
+    description: 'Knee only reaches 118°. Flags "Not deep enough", score 75.',
+    expectedReps: 1,
+    expectedMistakes: ['Not deep enough'],
+    expectedMinScore: 75,
+    expectedMaxScore: 75,
+    frames,
+  };
+}
+
+export function generateForwardLeanLungeScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+  // Torso leans to 34° (> 25°)
+  for (let i = 0; i < 26; i++) {
+    const angle = 170 - (i / 25) * (170 - 88);
+    const lean = 8 + (i / 25) * 26;
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, lean) });
+    t += 50;
+  }
+  for (let i = 0; i < 8; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(88, 34) });
+    t += 50;
+  }
+  for (let i = 0; i < 24; i++) {
+    const angle = 88 + (i / 23) * (170 - 88);
+    const lean = 34 - (i / 23) * 26;
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, lean) });
+    t += 50;
+  }
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+
+  return {
+    id: 'lunge_lean',
+    name: 'Lunge: Leaning Too Far Forward',
+    exerciseId: 'lunge',
+    description: 'Torso leans forward to 34° (>25°). Flags "Leaning too far forward", score 80.',
+    expectedReps: 1,
+    expectedMistakes: ['Leaning too far forward'],
+    expectedMinScore: 80,
+    expectedMaxScore: 80,
+    frames,
+  };
+}
+
+export function generateFastLungeScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+  // Drops in 300ms (6 frames @ 50ms)
+  for (let i = 0; i < 6; i++) {
+    const angle = 170 - (i / 5) * (170 - 88);
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, 10) });
+    t += 50;
+  }
+  for (let i = 0; i < 2; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(88, 10) });
+    t += 50;
+  }
+  for (let i = 0; i < 6; i++) {
+    const angle = 88 + (i / 5) * (170 - 88);
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(angle, 8) });
+    t += 50;
+  }
+  for (let i = 0; i < 10; i++) {
+    frames.push({ timestamp: t, landmarks: createLungeSkeleton(170, 8) });
+    t += 50;
+  }
+
+  return {
+    id: 'lunge_fast',
+    name: 'Lunge: Too Fast',
+    exerciseId: 'lunge',
+    description: 'Descent completes in 300ms (<850ms). Flags "Too fast", score 85.',
+    expectedReps: 1,
+    expectedMistakes: ['Too fast'],
+    expectedMinScore: 85,
+    expectedMaxScore: 85,
+    frames,
+  };
+}
+
+// ============================================================================
+// PLANK SCENARIOS
+// ============================================================================
+
+export function generatePlankWellHeldScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  // 1. Initial 2.2s stable hold (44 frames @ 50ms = 2200ms)
+  for (let i = 0; i < 44; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createPlankSkeleton(0, 0),
+      description: 'Holding plank to start timer (2.0s required)',
+    });
+    t += 50;
+  }
+
+  // 2. 5 seconds of active hold with good form (100 frames @ 50ms = 5000ms)
+  for (let i = 0; i < 100; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createPlankSkeleton(0, 0),
+      description: 'Active timed hold (perfect form)',
+    });
+    t += 50;
+  }
+
+  return {
+    id: 'plank_perfect',
+    name: 'Plank: Perfect Timed Hold',
+    exerciseId: 'plank',
+    description: '2.0s initial stable hold + 5s clean hold. Rep counted (1), score 100, no mistakes.',
+    expectedReps: 1,
+    expectedMistakes: [],
+    expectedMinScore: 100,
+    expectedMaxScore: 100,
+    frames,
+  };
+}
+
+export function generatePlankSaggingScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  // 1. Initial 2.2s stable hold
+  for (let i = 0; i < 44; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createPlankSkeleton(0, 0),
+      description: 'Initial stable hold',
+    });
+    t += 50;
+  }
+
+  // 2. 3 seconds of sagging hips (hipSagOffset = 0.08, alignment drops <165°)
+  for (let i = 0; i < 60; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createPlankSkeleton(0.08, 0),
+      description: 'Hips sagging toward floor',
+    });
+    t += 50;
+  }
+
+  // 3. 2 seconds of recovery back to good form
+  for (let i = 0; i < 40; i++) {
+    frames.push({
+      timestamp: t,
+      landmarks: createPlankSkeleton(0, 0),
+      description: 'Corrected form',
+    });
+    t += 50;
+  }
+
+  return {
+    id: 'plank_sagging',
+    name: 'Plank: Sagging Hips',
+    exerciseId: 'plank',
+    description: 'Hips sag for 3 seconds of the hold. Flags "Hips sagging", score reduced.',
+    expectedReps: 1,
+    expectedMistakes: ['Hips sagging'],
+    expectedMinScore: 40,
+    expectedMaxScore: 85,
+    frames,
+  };
+}
+
+export function generatePlankEarlyStopScenario(): SyntheticScenario {
+  const frames: SyntheticFrame[] = [];
+  let t = 0;
+
+  // 1. Initial 2.2s stable hold
+  for (let i = 0; i < 44; i++) {
+    frames.push({ timestamp: t, landmarks: createPlankSkeleton(0, 0) });
+    t += 50;
+  }
+
+  // 2. 6 seconds of good hold
+  for (let i = 0; i < 120; i++) {
+    frames.push({ timestamp: t, landmarks: createPlankSkeleton(0, 0) });
+    t += 50;
+  }
+
+  // 3. Dismounts: stands up / leaves frame for 2.5s (50 frames @ 50ms)
+  for (let i = 0; i < 70; i++) {
+    frames.push({ timestamp: t, landmarks: createBaseSkeleton(175, 8) });
+    t += 50;
+  }
+
+  return {
+    id: 'plank_early_stop',
+    name: 'Plank: User Dismounts Early',
+    exerciseId: 'plank',
+    description: 'Holds for 6s then stands up. Auto-finishes when dismounted for 2s.',
+    expectedReps: 1,
+    expectedMistakes: [],
+    expectedMinScore: 90,
+    expectedMaxScore: 100,
+    frames,
+  };
+}
+
 export const ALL_SYNTHETIC_SCENARIOS: SyntheticScenario[] = [
   generatePerfectSquatScenario(),
   generateShallowSquatScenario(),
@@ -821,6 +1304,13 @@ export const ALL_SYNTHETIC_SCENARIOS: SyntheticScenario[] = [
   generateSwingingBicepCurlScenario(),
   generateHalfBicepCurlScenario(),
   generateFastBicepCurlScenario(),
+  generatePerfectLungeScenario(),
+  generateShallowLungeScenario(),
+  generateForwardLeanLungeScenario(),
+  generateFastLungeScenario(),
+  generatePlankWellHeldScenario(),
+  generatePlankSaggingScenario(),
+  generatePlankEarlyStopScenario(),
   generateJitterScenario(),
   generateOutOfFrameScenario(),
 ];

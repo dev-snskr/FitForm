@@ -47,6 +47,15 @@ export async function GET(request: NextRequest) {
           mistakes = log.mistakes.split(',').map((s) => s.trim()).filter(Boolean);
         }
       }
+
+      const isPlank = log.exercise.toLowerCase().includes('plank');
+      const durationSeconds =
+        log.durationSeconds !== null && log.durationSeconds !== undefined
+          ? log.durationSeconds
+          : isPlank
+          ? log.reps
+          : null;
+
       return {
         id: log.id,
         userId: log.userId,
@@ -54,7 +63,8 @@ export async function GET(request: NextRequest) {
         dayNumber: log.dayNumber,
         exercise: log.exercise,
         setNumber: log.setNumber,
-        reps: log.reps,
+        reps: isPlank ? 0 : log.reps,
+        durationSeconds,
         formScore: log.formScore,
         mistakes,
         restSeconds: log.restSeconds,
@@ -72,6 +82,7 @@ export async function GET(request: NextRequest) {
         'Exercise',
         'Set',
         'Reps',
+        'Duration (s)',
         'Form Score',
         'Mistakes',
         'Rest (s)',
@@ -84,7 +95,8 @@ export async function GET(request: NextRequest) {
         escapeCsv(log.dayNumber),
         escapeCsv(log.exercise),
         escapeCsv(log.setNumber),
-        escapeCsv(log.reps),
+        escapeCsv(log.exercise.toLowerCase().includes('plank') ? '-' : log.reps),
+        escapeCsv(log.durationSeconds !== null ? `${log.durationSeconds} s` : '-'),
         escapeCsv(log.formScore ?? 'N/A'),
         escapeCsv(log.mistakes.join('; ')),
         escapeCsv(log.restSeconds),
@@ -134,16 +146,18 @@ export async function POST(request: NextRequest) {
       exercise,
       setNumber,
       reps,
+      durationSeconds,
       formScore,
       mistakes,
       restSeconds,
       mode,
     } = body;
 
-    // Validate required fields
-    if (!userId || !userName || !dayNumber || !exercise || !setNumber || reps === undefined) {
+    // Validate required fields (reps or durationSeconds must be provided)
+    const effectiveReps = reps !== undefined ? Number(reps) : Number(durationSeconds || 0);
+    if (!userId || !userName || !dayNumber || !exercise || !setNumber || isNaN(effectiveReps)) {
       return NextResponse.json(
-        { error: 'Missing required log fields (userId, userName, dayNumber, exercise, setNumber, reps)' },
+        { error: 'Missing required log fields (userId, userName, dayNumber, exercise, setNumber, reps/durationSeconds)' },
         { status: 400 }
       );
     }
@@ -171,7 +185,13 @@ export async function POST(request: NextRequest) {
         dayNumber: Number(dayNumber),
         exercise: exercise.trim(),
         setNumber: Number(setNumber),
-        reps: Number(reps),
+        reps: effectiveReps,
+        durationSeconds:
+          durationSeconds !== undefined && durationSeconds !== null
+            ? Number(durationSeconds)
+            : exercise.toLowerCase().includes('plank')
+            ? effectiveReps
+            : null,
         formScore: formScore !== null && formScore !== undefined ? parseFloat(formScore) : null,
         mistakes: mistakesStr,
         restSeconds: Number(restSeconds || 0),
