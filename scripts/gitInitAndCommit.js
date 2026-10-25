@@ -57,7 +57,7 @@ async function main() {
   const sha = await git.commit({
     fs,
     dir,
-    message: 'Fix: resolve drawFrame initialization ReferenceError and harden background lifecycle',
+    message: 'Step 3B-1: Implement reusable exercise analyzer architecture, push-up side check, and bicep curl form checking',
     author: {
       name: 'FitForm Developer',
       email: 'developer@fitform.local',

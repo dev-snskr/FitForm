@@ -213,8 +213,36 @@ export default function CameraWorkoutPage() {
    - Unit tests ([`tests/squatDetector.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/squatDetector.test.ts)) with Vitest verifying 6 synthetic scenarios (Perfect Squat, Shallow Squat, Forward Lean, Fast Descent, Stationary Jitter, Out of Frame).
    - Interactive developer preview studio at `/dev/pose-test` to scrub, step through, and replay synthetic landmark frames with live telemetry and DB test logging without a physical webcam.
 
-### Step 3B – Form Checking for Remaining Exercises (UPCOMING)
-- MediaPipe Pose form checking for: Push-Up, Bicep Curl, Lunge, Forearm Plank.
+### Step 3B-1 – Reusable Form Checker Architecture, Push-Up & Bicep Curl (COMPLETED)
+1. **Reusable Exercise Analyzer Pattern (`src/lib/pose/`)**
+   - Universal interface [`IExerciseAnalyzer`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/types.ts) and types ([`src/lib/pose/types.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/types.ts)).
+   - Shared configuration file [`src/lib/pose/exerciseConfig.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/exerciseConfig.ts) maintaining biomechanical thresholds, timings, deductions, and messages for all exercises.
+   - Dynamic exercise registry factory [`src/lib/pose/analyzers/registry.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/analyzers/registry.ts) (`createExerciseAnalyzer`, `resolveExerciseId`, `isExerciseFormTrackable`).
+   - Self-contained analyzers:
+     - [`SquatAnalyzer`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/analyzers/squatAnalyzer.ts): complete squat biomechanics, depth, torso lean, knee/toe balance.
+     - [`PushUpAnalyzer`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/analyzers/pushUpAnalyzer.ts): side-view push-up with 1.5s plank stability hold, elbow flexion (<90°), and body line alignment (>160°).
+     - [`BicepCurlAnalyzer`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/pose/analyzers/bicepCurlAnalyzer.ts): side-view single-arm bicep curl with customizable arm selection, full curl (<50°), full extension (>150°), and anti-swing checks (<15°).
+
+2. **Universal Live Camera Screen ([`src/components/pose/LiveExerciseCamera.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/pose/LiveExerciseCamera.tsx))**
+   - Automatically resolves analyzer and loads local on-device MediaPipe PoseLandmarker model (zero CDN).
+   - Dynamic real-time telemetry meters tailored to the active exercise (e.g. Knee Depth & Torso Lean; Elbow Angle & Body Alignment; Elbow Curl & Torso Swing).
+   - Interactive Left/Right arm selector for Bicep Curl with `localStorage` persistence.
+   - Real-time 1.5s plank hold progress countdown for Push-Up.
+   - Dynamic video border glow (green = good form, amber = warning, red = mistake/out of frame).
+   - 8-second stationary auto-finish once $\ge 1$ rep is logged.
+   - Backwards-compatibility wrapper [`LiveSquatCamera.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/pose/LiveSquatCamera.tsx) maintained.
+
+3. **Workout Flow Integration ([`src/app/workout/[day]/page.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/app/workout/[day]/page.tsx))**
+   - Live camera form check unlocked for **Squat**, **Push-Up**, and **Bicep Curl**.
+   - **Walking / Static Lunge** and **Forearm Plank** continue to show *"Form Check Coming Soon"* with clean manual set logging.
+   - Automatic log synchronization to SQLite database, `data/workout_logs.json`, and CSV/JSON exports.
+
+4. **Testing & Simulation Studio Upgrade**
+   - 22 Vitest unit tests in [`tests/exerciseAnalyzers.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/exerciseAnalyzers.test.ts) and [`tests/squatDetector.test.ts`](file:///c:/Users/Sanskar/Desktop/cep2/tests/squatDetector.test.ts) covering perfect reps, shallow depths, sagging hips, swinging torsos, fast tempos, plank holds, and edge cases.
+   - Developer Simulation Studio at [`/dev/pose-test`](file:///c:/Users/Sanskar/Desktop/cep2/src/app/dev/pose-test/page.tsx) upgraded with 14 synthetic scenarios across all supported exercises with visual playback, scrubbing, and test logging.
+
+### Step 3B-2 – Form Checking for Lunge & Forearm Plank (UPCOMING)
+- MediaPipe Pose form checking for: Walking/Static Lunge, Forearm Plank.
 
 ### Step 4 – Voice Corrections + Rest Timer
 - Audio feedback for form mistakes.

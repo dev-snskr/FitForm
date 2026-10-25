@@ -102,6 +102,54 @@ export function calculateKneeTravelPastToes(
 }
 
 /**
+ * Calculates push-up/plank body alignment from shoulder to hip to ankle.
+ * Returns:
+ * - angle: interior joint angle at hip (180 deg = straight line)
+ * - deviation: 'sagging' if hip is below shoulder-ankle line, 'high' if hip is above, or 'neutral'
+ */
+export function calculatePlankAlignment(
+  shoulder: LandmarkPoint,
+  hip: LandmarkPoint,
+  ankle: LandmarkPoint
+): { angle: number; deviation: 'sagging' | 'high' | 'neutral' } {
+  const angle = calculateAngle(shoulder, hip, ankle);
+
+  // 2D cross product to detect vertical deviation of hip relative to the line from shoulder to ankle
+  // In screen coords, y increases downwards.
+  const dxSA = ankle.x - shoulder.x;
+  const dySA = ankle.y - shoulder.y;
+  const dxSH = hip.x - shoulder.x;
+  const dySH = hip.y - shoulder.y;
+
+  const cross = dxSA * dySH - dySA * dxSH;
+  // Account for orientation: if shoulder is left of ankle (dxSA > 0), positive cross means hip is lower down (sagging)
+  const orientation = dxSA >= 0 ? 1 : -1;
+  const signedSag = cross * orientation;
+
+  let deviation: 'sagging' | 'high' | 'neutral' = 'neutral';
+  if (angle < 160) {
+    deviation = signedSag > 0 ? 'sagging' : 'high';
+  }
+
+  return { angle, deviation };
+}
+
+/**
+ * Calculates the deviation of the upper arm (shoulder -> elbow) from vertical.
+ * Useful for checking if the user is swinging their arms during bicep curls.
+ * 0 deg = hanging straight down towards floor.
+ */
+export function calculateUpperArmAngle(
+  shoulder: LandmarkPoint,
+  elbow: LandmarkPoint
+): number {
+  const dx = elbow.x - shoulder.x;
+  const dy = elbow.y - shoulder.y;
+  const angleRad = Math.atan2(Math.abs(dx), Math.max(0.001, dy));
+  return (angleRad * 180.0) / Math.PI;
+}
+
+/**
  * Smooths current landmark points using an Exponential Moving Average (EMA)
  * against previous landmarks to filter high-frequency camera jitter.
  */

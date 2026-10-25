@@ -27,7 +27,8 @@ import {
 import { motion } from 'framer-motion';
 import { getStoredActiveUserId } from '@/lib/profileStorage';
 import { useBackground } from '@/context/BackgroundContext';
-import LiveSquatCamera from '@/components/pose/LiveSquatCamera';
+import LiveExerciseCamera from '@/components/pose/LiveExerciseCamera';
+import { isExerciseFormTrackable } from '@/lib/pose/analyzers/registry';
 
 interface DayExerciseItem {
   id: number;
@@ -145,10 +146,9 @@ export default function WorkoutSessionPage() {
     }
   }, [currentExercise]);
 
-  const isSquatExercise = useMemo(() => {
+  const isFormCheckEnabled = useMemo(() => {
     if (!currentExercise) return false;
-    const name = currentExercise.exerciseName.toLowerCase();
-    return name.includes('squat');
+    return isExerciseFormTrackable(currentExercise.exerciseName);
   }, [currentExercise]);
 
   // Post a completed set log to the API
@@ -430,8 +430,9 @@ export default function WorkoutSessionPage() {
       )}
 
       {/* Live Camera Mode Active */}
-      {isCameraActive && (
-        <LiveSquatCamera
+      {isCameraActive && currentExercise && (
+        <LiveExerciseCamera
+          exerciseName={currentExercise.exerciseName}
           onSetCompleted={handleCameraSetCompleted}
           onCancel={() => setIsCameraActive(false)}
           targetReps={currentExercise.reps || 12}
@@ -486,7 +487,7 @@ export default function WorkoutSessionPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Live Camera Option */}
-                {isSquatExercise ? (
+                {isFormCheckEnabled ? (
                   <button
                     type="button"
                     onClick={() => setIsCameraActive(true)}
@@ -504,7 +505,7 @@ export default function WorkoutSessionPage() {
                       Live Camera Form Check
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Real-time side-on pose tracking with automatic rep counting and depth scoring.
+                      Real-time side-on pose tracking with automatic rep counting and form scoring.
                     </p>
                   </button>
                 ) : (
@@ -514,7 +515,7 @@ export default function WorkoutSessionPage() {
                         <Camera className="w-5 h-5" />
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                        Step 3: Squat Only
+                        Form Check Coming Soon
                       </span>
                     </div>
                     <div className="text-base font-bold text-slate-500 dark:text-slate-400">
