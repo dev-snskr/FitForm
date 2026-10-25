@@ -284,13 +284,130 @@ export default function CameraWorkoutPage() {
      - Plank: 2.0s stability hold, clean hold, sagging hips, early dismount.
    - Verified backward compatibility across Squat, Push-Up, Bicep Curl, Diet Planner, and Timeline.
 
-### Step 4 – Voice Corrections + Rest Timer
-- Audio feedback for form mistakes.
-- Countdown rest timer between sets.
+### Step 4 – Voice Corrections + Rest Timer (COMPLETED)
+1. **Timestamp-Accurate Glass Rest Timer (`src/components/workout/RestTimerScreen.tsx`)**
+   - Shows after a set is saved (live camera or manual entry).
+   - Base countdown on real timestamps (`Date.now()` vs target end time) to ensure immunity to browser background tab throttling.
+   - Large circular SVG countdown ring with smooth stroke dash offset and digital seconds counter.
+   - Dynamic exercise cues and tips tailored to the upcoming exercise (`getExerciseTip()`).
+   - Rest controls:
+     - Minus and plus 15-second quick adjustments (`-15s`, `+15s`).
+     - Preset chips (`30s`, `60s`, `90s`, `2 min`, `3 min`).
+     - Quick `+30s` extension button during active countdown.
+     - Pause and Resume states with frozen timestamp delta.
+     - Skip rest button to immediately advance.
+     - "Reset to recommended" chip restoring the plan's default rest.
+   - Profile & exercise memory: remembers chosen rest preferences per exercise and per user profile in `localStorage` (`src/lib/workout/restPreferences.ts`).
+   - Web Audio API synthesizer tones & mobile haptics (`src/lib/voice/soundEffects.ts`):
+     - Soft chime at 10 seconds remaining.
+     - Distinct alert beeps on 3, 2, and 1 / GO.
+     - Gentle mobile vibration pattern (`navigator.vibrate`) where supported.
+   - Rest duration persistence:
+     - Measures actual seconds rested and saves them to SQLite DB, `data/workout_logs.json`, and CSV/JSON exports via `PATCH /api/logs`.
+   - Browser gesture compliance: Rest countdown finishes with a clear "Ready! Start Set" button press, ensuring subsequent camera and speech actions have required browser user activation.
+   - Battery & GPU conservation: Webcam stream tracks are paused/stopped and pose detection is halted during the rest period.
 
-### Step 5 – Streaks/Badges + Progress Dashboard
-- Workout streak tracking, achievement badges.
-- Visual progress dashboard with charts.
+2. **Workout Complete Celebration (`src/components/workout/WorkoutSummaryCard.tsx`)**
+   - Triggers when the final set of the final exercise of the day is saved (does not show rest timer).
+   - Rich celebration card presenting:
+     - Total exercises completed and total sets logged.
+     - Total reps and cumulative plank hold time.
+     - Overall average biomechanical form score.
+     - Top recurring form mistakes identified across sets.
+     - Total elapsed workout duration in minutes.
+     - Direct button to return to the interactive plan timeline (`/plan`).
+
+3. **Centralized Voice & Speech Engine (`src/lib/voice/`)**
+   - Centralized concise phrase dictionary (`phrases.ts`) with all cues under 8 words for Squat, Push-Up, Bicep Curl, Lunge, and Plank.
+   - Prioritized speech scheduler (`speechScheduler.ts`):
+     - Uses standard browser `window.speechSynthesis`.
+     - Single-queue anti-overlap policy (cancels stale utterance if priority permits).
+     - 8-second cooldown per distinct mistake to eliminate repetitive nagging.
+     - 3-second spacing interval between consecutive spoken phrases.
+     - Plank milestone announcements (e.g. *"10 seconds left"*, *"Target reached, hold strong"*).
+     - Positive reinforcement cues on every 3rd consecutive clean rep without mistakes.
+     - Accessible live on-screen visual captions for hearing-impaired users or noisy gym environments.
+     - Workaround for Chromium speech synthesis garbage-collection bug.
+
+4. **Voice & Sound Settings Modal (`src/components/voice/VoiceSettingsModal.tsx`)**
+   - Accessible via speaker button on Navbar, Camera Screen, and Rest Timer.
+   - Settings:
+     - Voice coaching toggle (on/off).
+     - Natural browser voice picker (filters to best English voice by default).
+     - Speech rate / speed slider (0.8x to 1.3x).
+     - Volume slider (0% to 100%).
+     - Countdown beeps toggle (on/off).
+     - Rep count announcements toggle (on/off).
+     - "Test voice" interactive audition button.
+   - Settings persisted per user profile in `localStorage`.
+
+5. **Testing & Verification Suite**
+   - 48 automated Vitest unit & integration tests (`tests/speechAndRestTimer.test.ts`, `tests/squatDetector.test.ts`, `tests/exerciseAnalyzers.test.ts`).
+   - Simulation Studio upgraded at `/dev/pose-test` with audio simulator, mistake triggers, and rest timer modal preview launcher.
+   - End-to-end flow test script `scripts/testStep4Flow.mjs` verifying log creation, `PATCH /api/logs` rest seconds update, JSON mirror sync, and CSV exports.
+
+### Step 5 – Streaks/Badges + Progress Dashboard (COMPLETED)
+1. **Personal Analytics Dashboard (`/progress` & Navbar Link)**
+   - Added "Progress" link to top navigation bar (`Workout, Diet, Progress, Logs`) with theme-aware sliding indicator.
+   - Glassmorphic personal dashboard with staggered entrance animations (`framer-motion`), fully responsive across phone and laptop.
+   - Empty state ("Complete your first workout to see progress here") with quick link to Day 1 plan.
+   - Headline metric summary cards:
+     - Average biomechanical form score.
+     - Best recorded set with score, exercise, and reps.
+     - Total reps logged + plank hold seconds.
+     - Estimated time under iron in minutes.
+
+2. **Streak Engine & Program Heatmap (`src/lib/progress/streakCalculator.ts`)**
+   - Rules centralized in one commented file:
+     - A day counts as "done" when the plan day's workout is completed.
+     - Planned rest and recovery days do NOT break the streak.
+     - Skipping a planned workout day breaks the streak.
+     - Uses local date (`YYYY-MM-DD`), handling timezone and midnight boundary transitions cleanly.
+   - Metric outputs: Current streak, longest streak, total workouts completed.
+   - "This Week" 7-day row with status indicators (`done`, `rest`, `missed`, `upcoming`).
+   - 30-Day Program Calendar Heatmap color-coded by form score ($\ge 90\%$, $75-89\%$, $<75\%$) and rest/missed days.
+   - Encouraging risk warning when today's scheduled workout is still pending.
+
+3. **14 Milestone Badges System (`src/lib/progress/badgesConfig.ts`)**
+   - Centralized registry defining 14 badges with deterministic evaluation rules:
+     - *First Step* (first workout session completed)
+     - *3-Day Momentum*, *7-Day Champion*, *2-Week Iron Habit* (3, 7, 14-day streaks)
+     - *Full Week Clean Sweep* (completed all planned workouts in a week)
+     - *Halfway Hero* (Day 15 completed)
+     - *30-Day Legend* (all 30 days completed)
+     - *Biomechanical Precision* (first set scored $\ge 90\%$)
+     - *Master of Form* (5 sets scored $\ge 90\%$)
+     - *Squat Master* (100 squat reps)
+     - *Push-up Pro* (100 push-up reps)
+     - *Iron Plank* (300 seconds of cumulative forearm plank hold)
+     - *Dietary Strategist* (saved first personalized diet plan)
+     - *The Comeback* (completed a workout after a missed day)
+   - Stable unlock timestamps persisted in `UserBadge` table (`prisma/schema.prisma`).
+   - Badge Wall displaying unlocked badges in vibrant metallic glass style with earned date, and locked badges greyed out with live percentage progress bars.
+   - Celebratory popup modal (`BadgeUnlockModal.tsx`) with glow animation shown once per badge (respects `prefers-reduced-motion`).
+
+4. **Recharts Visualizations (`src/components/progress/`)**
+   - **Form Score Progression (`FormScoreChart.tsx`)**: Daily average form scores over time with a linear regression trend line and an interactive per-exercise filter dropdown.
+   - **Bodyweight Tracking (`WeightChart.tsx`)**: Historical bodyweight progression graph with starting vs current weight delta calculation ("-2.1 kg"). Includes inline "Log Today's Weight" form and JSON export download.
+   - **Weekly Volume & Consistency (`VolumeChart.tsx`)**: Bar chart comparing total reps and plank hold seconds, as well as planned vs completed workout consistency per week.
+   - **Biomechanical Mistakes Breakdown (`MistakesBreakdownChart.tsx`)**: Horizontal bar chart of top technique errors with a plain-language coaching tip targeting the #1 mistake.
+
+5. **Weight Tracking & SQLite Migration (`src/app/api/weight/route.ts`)**
+   - Added `WeightEntry` table (`userId`, `weightKg`, `date`, `recordedAt`) with safe non-destructive migration preserving all existing rows.
+   - Initial onboarding weight auto-seeded as day-1 entry.
+   - 30 kg to 250 kg input validation; allows 1 entry per day, editable for today.
+   - JSON export format endpoint (`GET /api/weight?format=json`).
+
+6. **Development-Only Demo Data Tool (`src/app/api/dev/demo-data/route.ts`)**
+   - Clearly labelled "Load demo data" button (visible only in dev mode).
+   - Generates an isolated "Demo User" profile with ~3 weeks of realistic history (gradual form score improvement from 76% to 96%, planned rest days, an intentionally missed day triggering Comeback badge, and a -2.1 kg weight drop).
+   - "Delete demo data" button that cleans up only the demo profile and its records. Real user profiles are never mixed or modified.
+
+7. **Verification & Testing**
+   - 69 Vitest unit & integration tests passing with 0 failures across 4 test suites (`tests/streaksAndBadges.test.ts`, `tests/speechAndRestTimer.test.ts`, `tests/squatDetector.test.ts`, `tests/exerciseAnalyzers.test.ts`).
+   - TypeScript compiler (`tsc --noEmit`) and ESLint (`npm run lint`): 0 errors or warnings.
+   - Production Next.js build (`npm run build`) succeeded.
+   - Automated end-to-end verification script (`scripts/testStep5Flow.mjs`) verified demo profile generation, metrics, badges, weight validation, JSON export, and cleanup.
 
 ### Step 6 – 3D Character with Muscle Highlight
 - 3D body model highlighting muscles worked.

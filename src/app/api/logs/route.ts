@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { syncWorkoutLogsToJson } from '@/lib/syncLogs';
+import { evaluateAndSyncUserBadges } from '@/lib/progress/badgeChecker';
 
 export const dynamic = 'force-dynamic';
 
@@ -199,12 +200,63 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Check for newly earned badges
+    let newlyEarnedBadges: unknown[] = [];
+    try {
+      const badgeSync = await evaluateAndSyncUserBadges(Number(userId));
+      newlyEarnedBadges = badgeSync.newlyEarnedBadges;
+    } catch (badgeErr) {
+      console.warn('Failed to evaluate badges on set log:', badgeErr);
+    }
+
     // Synchronize to data/workout_logs.json after EVERY log write
     await syncWorkoutLogsToJson();
 
-    return NextResponse.json({ success: true, log: createdLog }, { status: 201 });
+    return NextResponse.json(
+      { success: true, log: createdLog, newlyEarnedBadges },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Failed to record workout log:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// PATCH: update actual rest seconds for a saved set log (called when rest timer finishes or is skipped)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { logId, restSeconds } = body;
+
+    if (!logId || restSeconds === undefined || isNaN(Number(restSeconds))) {
+      return NextResponse.json(
+        { error: 'Missing or invalid fields: logId and numeric restSeconds required' },
+        { status: 400 }
+      );
+    }
+
+    const id = Number(logId);
+    const existingLog = await prisma.workoutLog.findUnique({
+      where: { id },
+    });
+
+    if (!existingLog) {
+      return NextResponse.json({ error: 'Workout log not found' }, { status: 404 });
+    }
+
+    const updatedLog = await prisma.workoutLog.update({
+      where: { id },
+      data: {
+        restSeconds: Math.max(0, Math.round(Number(restSeconds))),
+      },
+    });
+
+    // Synchronize to data/workout_logs.json
+    await syncWorkoutLogsToJson();
+
+    return NextResponse.json({ success: true, log: updatedLog });
+  } catch (error) {
+    console.error('Failed to update workout log:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

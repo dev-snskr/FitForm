@@ -19,7 +19,13 @@ import {
   Activity,
   Sparkles,
   Layers,
+  Volume2,
+  Timer,
 } from 'lucide-react';
+import { globalSpeechScheduler } from '@/lib/voice/speechScheduler';
+import { getCorrectionPhrase, POSITIVE_CUES } from '@/lib/voice/phrases';
+import RestTimerScreen from '@/components/workout/RestTimerScreen';
+import VoiceSettingsModal from '@/components/voice/VoiceSettingsModal';
 import {
   ALL_SYNTHETIC_SCENARIOS,
   SyntheticScenario,
@@ -36,6 +42,21 @@ export default function PoseTestPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [analysis, setAnalysis] = useState<ExerciseAnalysisResult | null>(null);
+  const [captionText, setCaptionText] = useState<string | null>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isTestRestActive, setIsTestRestActive] = useState(false);
+
+  // Subscribe to speech captions
+  useEffect(() => {
+    globalSpeechScheduler.setSetInProgress(true);
+    const unsub = globalSpeechScheduler.addCaptionListener((cap) => {
+      setCaptionText(cap);
+    });
+    return () => {
+      unsub();
+      globalSpeechScheduler.setSetInProgress(false);
+    };
+  }, []);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const analyzerRef = useRef<IExerciseAnalyzer | null>(null);
@@ -144,6 +165,27 @@ export default function PoseTestPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isPlaying, playbackSpeed, scenario]);
+
+  // Trigger spoken voice cues on demand for testing
+  const triggerVoiceTest = (mistakeText: string) => {
+    const correction = getCorrectionPhrase(scenario.exerciseId, mistakeText);
+    if (correction) {
+      globalSpeechScheduler.speak({
+        text: correction.phrase,
+        priority: correction.priority,
+        mistakeKey: mistakeText,
+      });
+    }
+  };
+
+  const triggerPositiveVoice = () => {
+    const cue = POSITIVE_CUES[Math.floor(Math.random() * POSITIVE_CUES.length)];
+    globalSpeechScheduler.speak({
+      text: cue,
+      priority: 20,
+      isPositive: true,
+    });
+  };
 
   const handleReset = () => {
     setIsPlaying(false);
@@ -536,6 +578,85 @@ export default function PoseTestPage() {
               </div>
             </div>
 
+            {/* Step 4 Voice & Audio Simulator Panel */}
+            <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <span className="flex items-center space-x-1">
+                  <Volume2 className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Voice & Sound Tester</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                >
+                  Settings
+                </button>
+              </div>
+
+              {captionText && (
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-cyan-400/50 text-cyan-300 text-xs font-bold flex items-center space-x-2 animate-pulse">
+                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0 text-cyan-400" />
+                  <span>Caption: &quot;{captionText}&quot;</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => triggerVoiceTest('not deep')}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 text-left transition"
+                >
+                  🔊 &quot;Go deeper&quot;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerVoiceTest('leaning')}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 text-left transition"
+                >
+                  🔊 &quot;Keep chest up&quot;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerVoiceTest('hips sagging')}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 text-left transition"
+                >
+                  🔊 &quot;Hips up&quot;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerVoiceTest('too fast')}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 text-left transition"
+                >
+                  🔊 &quot;Slow down&quot;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerVoiceTest('out of frame')}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 text-left transition"
+                >
+                  🔊 &quot;Step back&quot;
+                </button>
+                <button
+                  type="button"
+                  onClick={triggerPositiveVoice}
+                  className="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-600/30 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 text-left transition"
+                >
+                  ✨ Positive Cue
+                </button>
+              </div>
+
+              {/* Rest Timer Modal Preview Launcher */}
+              <button
+                type="button"
+                onClick={() => setIsTestRestActive(true)}
+                className="w-full mt-2 inline-flex items-center justify-center space-x-2 py-2 rounded-xl border border-cyan-500/40 bg-cyan-50 dark:bg-cyan-950/30 hover:bg-cyan-100 text-cyan-800 dark:text-cyan-200 text-xs font-bold transition cursor-pointer"
+              >
+                <Timer className="w-3.5 h-3.5 text-cyan-500" />
+                <span>Launch Rest Timer (30s Preview)</span>
+              </button>
+            </div>
+
             {/* Test DB Log Button */}
             <div className="pt-3 border-t border-slate-200 dark:border-white/10">
               <button
@@ -556,6 +677,27 @@ export default function PoseTestPage() {
           </div>
         </div>
       </div>
+
+      {/* Voice Settings Modal */}
+      <VoiceSettingsModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+      />
+
+      {/* Test Rest Timer Overlay */}
+      {isTestRestActive && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl relative">
+            <RestTimerScreen
+              recommendedRestSeconds={30}
+              nextExerciseName="Squat"
+              nextSetNumber={2}
+              nextTotalSets={4}
+              onFinishRest={() => setIsTestRestActive(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

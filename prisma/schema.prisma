@@ -11,19 +11,22 @@ generator client {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  name        String
-  age         Int
-  gender      String
-  heightCm    Float
-  weightKg    Float
-  goal        String
-  experience  String
-  daysPerWeek Int
-  createdAt   DateTime     @default(now())
-  workoutDays WorkoutDay[]
-  logs        WorkoutLog[]
-  dietPlans   DietPlan[]
+  id            Int           @id @default(autoincrement())
+  name          String
+  age           Int
+  gender        String
+  heightCm      Float
+  weightKg      Float
+  goal          String
+  experience    String
+  daysPerWeek   Int
+  isDemo        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  workoutDays   WorkoutDay[]
+  logs          WorkoutLog[]
+  dietPlans     DietPlan[]
+  weightEntries WeightEntry[]
+  badges        UserBadge[]
 }
 
 model WorkoutDay {
@@ -83,4 +86,25 @@ model DietPlan {
   totalProtein   Float
   mealsJson      String   // JSON array of meals with food items
   createdAt      DateTime @default(now())
+}
+
+model WeightEntry {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg   Float
+  date       String   // "YYYY-MM-DD" local calendar date
+  recordedAt DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
+model UserBadge {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String   // Matches unique identifier in badgesConfig.ts
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
 }

@@ -10,25 +10,25 @@
 // - Day completion when all sets are logged.
 // - Sets background component to 'static' mode for high performance.
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Camera,
   Upload,
-  CheckCircle2,
   AlertCircle,
   Loader2,
-  ChevronRight,
-  Trophy,
-  ClipboardList,
+  Volume2,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { getStoredActiveUserId } from '@/lib/profileStorage';
 import { useBackground } from '@/context/BackgroundContext';
 import LiveExerciseCamera from '@/components/pose/LiveExerciseCamera';
 import { isExerciseFormTrackable } from '@/lib/pose/analyzers/registry';
+import RestTimerScreen from '@/components/workout/RestTimerScreen';
+import WorkoutSummaryCard, { WorkoutSummaryData } from '@/components/workout/WorkoutSummaryCard';
+import VoiceSettingsModal from '@/components/voice/VoiceSettingsModal';
+import BadgeUnlockModal, { UnlockedBadgeInfo } from '@/components/progress/BadgeUnlockModal';
 
 interface DayExerciseItem {
   id: number;
@@ -50,16 +50,6 @@ interface WorkoutDayDetail {
   exercises: DayExerciseItem[];
 }
 
-interface SetCompleteSummary {
-  exerciseName: string;
-  setNumber: number;
-  reps: number;
-  durationSeconds?: number | null;
-  formScore: number | null;
-  mistakes: string[];
-  mode: 'live_camera' | 'manual';
-}
-
 export default function WorkoutSessionPage() {
   const params = useParams();
   const router = useRouter();
@@ -79,8 +69,28 @@ export default function WorkoutSessionPage() {
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [manualReps, setManualReps] = useState<number>(12);
   const [isSavingLog, setIsSavingLog] = useState<boolean>(false);
-  const [completedSetSummary, setCompletedSetSummary] = useState<SetCompleteSummary | null>(null);
   const [isWorkoutFinished, setIsWorkoutFinished] = useState<boolean>(false);
+  const [isResting, setIsResting] = useState<boolean>(false);
+  const [lastLoggedLogId, setLastLoggedLogId] = useState<number | null>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
+  const [unlockedBadge, setUnlockedBadge] = useState<UnlockedBadgeInfo | null>(null);
+
+  // Accumulated workout session statistics for final summary
+  const sessionStatsRef = useRef<{
+    workoutStartMs: number;
+    totalSets: number;
+    totalReps: number;
+    totalHoldSeconds: number;
+    formScores: number[];
+    mistakes: Set<string>;
+  }>({
+    workoutStartMs: Date.now(),
+    totalSets: 0,
+    totalReps: 0,
+    totalHoldSeconds: 0,
+    formScores: [],
+    mistakes: new Set(),
+  });
 
   // Set background to static mode on this page for GPU efficiency
   useEffect(() => {
@@ -189,23 +199,101 @@ export default function WorkoutSessionPage() {
         throw new Error(errData.error || 'Failed to save set log');
       }
 
-      // Show Set Complete Card
-      setCompletedSetSummary({
-        exerciseName: currentExercise.exerciseName,
-        setNumber: currentSetNumber,
-        reps,
-        durationSeconds: durationSeconds ?? null,
-        formScore,
-        mistakes,
-        mode,
-      });
+      const logData = await res.json();
+      const createdId = logData.log?.id;
+      setLastLoggedLogId(createdId || null);
+
+      // Check for newly unlocked badge celebration
+      if (logData.newlyEarnedBadges && logData.newlyEarnedBadges.length > 0) {
+        setUnlockedBadge(logData.newlyEarnedBadges[0]);
+      }
+
+      // Accumulate session stats for final summary
+      const stats = sessionStatsRef.current;
+      stats.totalSets += 1;
+      stats.totalReps += reps;
+      stats.totalHoldSeconds += durationSeconds || 0;
+      if (formScore !== null && formScore !== undefined) {
+        stats.formScores.push(formScore);
+      }
+      if (mistakes && mistakes.length > 0) {
+        mistakes.forEach((m) => stats.mistakes.add(m));
+      }
+
       setIsCameraActive(false);
+
+      // Check if this was the last set of the workout
+      const isFinalSet =
+        Boolean(dayData) &&
+        currentExerciseIndex === dayData!.exercises.length - 1 &&
+        currentSetNumber === currentExercise.sets;
+
+      if (isFinalSet) {
+        setIsWorkoutFinished(true);
+      } else {
+        // Activate Rest Timer screen
+        setIsResting(true);
+      }
     } catch (err: unknown) {
       console.error('Error logging set:', err);
       alert('Could not save set log. Please try again.');
     } finally {
       setIsSavingLog(false);
     }
+  };
+
+  // Next set calculation for rest screen
+  const nextSetInfo = useMemo(() => {
+    if (!dayData || !currentExercise) {
+      return { name: '', setNum: 1, totalSets: 1, restSeconds: 60 };
+    }
+    if (currentSetNumber < currentExercise.sets) {
+      return {
+        name: currentExercise.exerciseName,
+        setNum: currentSetNumber + 1,
+        totalSets: currentExercise.sets,
+        restSeconds: currentExercise.restSeconds || 60,
+      };
+    }
+    const nextIdx = currentExerciseIndex + 1;
+    const nextEx = dayData.exercises[nextIdx] || currentExercise;
+    return {
+      name: nextEx.exerciseName,
+      setNum: 1,
+      totalSets: nextEx.sets,
+      restSeconds: nextEx.restSeconds || 60,
+    };
+  }, [dayData, currentExercise, currentExerciseIndex, currentSetNumber]);
+
+  // Callback when rest finishes or is skipped
+  const handleFinishRest = async (actualSecondsRested: number) => {
+    // Save actual rest duration to DB via PATCH /api/logs
+    if (lastLoggedLogId) {
+      try {
+        await fetch('/api/logs', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            logId: lastLoggedLogId,
+            restSeconds: actualSecondsRested,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update actual rest duration:', err);
+      }
+    }
+
+    if (!dayData || !currentExercise) return;
+
+    // Advance set pointers
+    if (currentSetNumber < currentExercise.sets) {
+      setCurrentSetNumber((prev) => prev + 1);
+    } else if (currentExerciseIndex < dayData.exercises.length - 1) {
+      setCurrentExerciseIndex((prev) => prev + 1);
+      setCurrentSetNumber(1);
+    }
+
+    setIsResting(false);
   };
 
   // Live Camera set finished callback
@@ -231,27 +319,6 @@ export default function WorkoutSessionPage() {
       recordSetLog(0, null, [], 'manual', manualReps);
     } else {
       recordSetLog(manualReps, null, [], 'manual', null);
-    }
-  };
-
-  // Advance to next set or next exercise
-  const handleAdvanceNextSet = () => {
-    if (!dayData || !currentExercise) return;
-
-    setCompletedSetSummary(null);
-
-    // If more sets remain for this exercise
-    if (currentSetNumber < currentExercise.sets) {
-      setCurrentSetNumber((prev) => prev + 1);
-    }
-    // If more exercises remain in this day
-    else if (currentExerciseIndex < dayData.exercises.length - 1) {
-      setCurrentExerciseIndex((prev) => prev + 1);
-      setCurrentSetNumber(1);
-    }
-    // Entire day is finished!
-    else {
-      setIsWorkoutFinished(true);
     }
   };
 
@@ -287,54 +354,63 @@ export default function WorkoutSessionPage() {
     );
   }
 
-  // Celebratory Workout Finished View
+  // Celebratory Workout Finished View (Rich Summary Card)
   if (isWorkoutFinished) {
+    const stats = sessionStatsRef.current;
+    const avgScore =
+      stats.formScores.length > 0
+        ? stats.formScores.reduce((a: number, b: number) => a + b, 0) / stats.formScores.length
+        : null;
+
+    const summaryData: WorkoutSummaryData = {
+      dayNumber: Number(dayNumber),
+      totalExercises: dayData?.exercises?.length || 0,
+      totalSets: stats.totalSets,
+      totalReps: stats.totalReps,
+      totalHoldSeconds: stats.totalHoldSeconds,
+      averageFormScore: avgScore,
+      topMistakes: (Array.from(stats.mistakes) as string[]).slice(0, 4),
+      totalWorkoutMinutes: Math.max(
+        1,
+        Math.round((Date.now() - stats.workoutStartMs) / 60000)
+      ),
+    };
+
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="glass-panel rounded-3xl p-8 sm:p-10 border border-emerald-500/30 shadow-2xl"
-        >
-          <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6 text-emerald-500">
-            <Trophy className="w-10 h-10" />
-          </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {/* Voice & Sound Settings Modal */}
+        <VoiceSettingsModal
+          isOpen={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          userId={userId}
+        />
 
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-            Day {dayNumber} Complete!
-          </span>
+        {/* Badge Celebration Modal */}
+        <BadgeUnlockModal
+          badge={unlockedBadge}
+          onClose={() => setUnlockedBadge(null)}
+        />
 
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white mt-3 mb-2">
-            Outstanding Workout!
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
-            All prescribed exercises and sets for Day {dayNumber} have been logged and synced. Your program timeline is updated!
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/plan"
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/30"
-            >
-              <span>Back to Program Timeline</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              href="/logs"
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-semibold"
-            >
-              <ClipboardList className="w-4 h-4" />
-              <span>View Workout Logs</span>
-            </Link>
-          </div>
-        </motion.div>
+        <WorkoutSummaryCard summary={summaryData} />
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      {/* Voice & Sound Settings Modal */}
+      <VoiceSettingsModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        userId={userId}
+      />
+
+      {/* Badge Celebration Modal */}
+      <BadgeUnlockModal
+        badge={unlockedBadge}
+        onClose={() => setUnlockedBadge(null)}
+      />
+
       {/* Top Navigation & Day Progress Bar */}
       <div className="flex items-center justify-between mb-6">
         <Link
@@ -346,105 +422,23 @@ export default function WorkoutSessionPage() {
         </Link>
 
         {/* Progress status */}
-        <div className="flex items-center space-x-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-          <span>Exercise {currentExerciseIndex + 1} of {dayData.exercises.length}</span>
-          <span>•</span>
-          <span>Set {currentSetNumber} of {currentExercise.sets}</span>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+            <span>Exercise {currentExerciseIndex + 1} of {dayData.exercises.length}</span>
+            <span>•</span>
+            <span>Set {currentSetNumber} of {currentExercise.sets}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="p-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition shadow-sm cursor-pointer"
+            title="Voice & Sound Settings"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
-
-      {/* Set Complete Modal / Card */}
-      {completedSetSummary && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel rounded-2xl p-6 sm:p-8 border border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 mb-8 shadow-xl"
-        >
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/25">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                Set #{completedSetSummary.setNumber} Complete!
-              </h2>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                {completedSetSummary.exerciseName} • Logged via{' '}
-                {completedSetSummary.mode === 'live_camera' ? 'Live Camera' : 'Manual Entry'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-            <div className="p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center">
-              <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                {completedSetSummary.durationSeconds
-                  ? `${completedSetSummary.durationSeconds} s`
-                  : completedSetSummary.reps}
-              </div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">
-                {completedSetSummary.durationSeconds ? 'Hold Time' : 'Reps Logged'}
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center">
-              <div
-                className={`text-2xl font-black ${
-                  completedSetSummary.formScore !== null
-                    ? completedSetSummary.formScore >= 90
-                      ? 'text-emerald-500'
-                      : completedSetSummary.formScore >= 75
-                      ? 'text-amber-500'
-                      : 'text-red-500'
-                    : 'text-slate-400'
-                }`}
-              >
-                {completedSetSummary.formScore !== null ? `${completedSetSummary.formScore}%` : 'Not scored'}
-              </div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase mt-0.5">
-                Form Score
-              </div>
-            </div>
-
-            <div className="col-span-2 sm:col-span-1 p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center flex flex-col justify-center">
-              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                {completedSetSummary.mistakes.length === 0
-                  ? 'Clean Form'
-                  : `${completedSetSummary.mistakes.length} Correction(s)`}
-              </div>
-              <div className="text-[11px] text-slate-500 uppercase mt-0.5">
-                Biomechanical Check
-              </div>
-            </div>
-          </div>
-
-          {/* Mistakes detected list */}
-          {completedSetSummary.mistakes.length > 0 && (
-            <div className="mb-6 p-3 rounded-xl bg-red-50/70 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-xs text-red-700 dark:text-red-300">
-              <strong className="block mb-1">Form feedback notes:</strong>
-              <ul className="list-disc list-inside space-y-0.5">
-                {completedSetSummary.mistakes.map((m, idx) => (
-                  <li key={idx}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500 italic">
-              Rest timer coming in Step 4. Rest as needed.
-            </span>
-            <button
-              type="button"
-              onClick={handleAdvanceNextSet}
-              className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition shadow-lg shadow-indigo-600/30 cursor-pointer active:scale-98"
-            >
-              <span>Next Set</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
-      )}
 
       {/* Live Camera Mode Active */}
       {isCameraActive && currentExercise && (
@@ -458,8 +452,21 @@ export default function WorkoutSessionPage() {
         />
       )}
 
-      {/* Regular Exercise Workspace View (when camera is not active and set is not just completed) */}
-      {!isCameraActive && !completedSetSummary && (
+      {/* Rest Timer Active */}
+      {isResting && !isCameraActive && (
+        <RestTimerScreen
+          currentSetLogId={lastLoggedLogId}
+          recommendedRestSeconds={nextSetInfo.restSeconds}
+          nextExerciseName={nextSetInfo.name}
+          nextSetNumber={nextSetInfo.setNum}
+          nextTotalSets={nextSetInfo.totalSets}
+          userId={userId}
+          onFinishRest={handleFinishRest}
+        />
+      )}
+
+      {/* Regular Exercise Workspace View (when neither camera nor rest is active) */}
+      {!isCameraActive && !isResting && (
         <div className="space-y-6">
           {/* Main Exercise Card */}
           <div className="glass-panel rounded-3xl p-6 sm:p-8 border shadow-lg">

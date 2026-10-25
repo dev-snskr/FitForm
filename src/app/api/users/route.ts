@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { validateUserProfile } from '@/lib/validation';
 import { generate30DayPlan } from '@/lib/planGenerator';
+import { formatToLocalDateString } from '@/lib/progress/streakCalculator';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,15 @@ export async function POST(request: NextRequest) {
           goal: goal.toLowerCase(),
           experience: experience.toLowerCase(),
           daysPerWeek: Number(daysPerWeek),
+        },
+      });
+
+      // Seed initial onboarding weight entry
+      await tx.weightEntry.create({
+        data: {
+          userId: user.id,
+          weightKg: parseFloat(weightKg),
+          date: formatToLocalDateString(new Date()),
         },
       });
 

@@ -14,6 +14,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Dumbbell,
   Utensils,
+  TrendingUp,
   ClipboardList,
   User,
   PlusCircle,
@@ -21,10 +22,12 @@ import {
   Menu,
   X,
   Sparkles,
+  Volume2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStoredActiveUserId, setStoredActiveUserId } from '@/lib/profileStorage';
 import ThemeToggle from './ThemeToggle';
+import VoiceSettingsModal from './voice/VoiceSettingsModal';
 
 interface UserSummary {
   id: number;
@@ -41,6 +44,7 @@ export default function Navbar() {
   const [activeUser, setActiveUser] = useState<UserSummary | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   // Load users and current active profile
   const fetchProfiles = async () => {
@@ -95,6 +99,7 @@ export default function Navbar() {
   const navLinks = [
     { label: 'Workout', href: '/plan', icon: Dumbbell },
     { label: 'Diet', href: '/diet', icon: Utensils },
+    { label: 'Progress', href: '/progress', icon: TrendingUp },
     { label: 'Logs', href: '/logs', icon: ClipboardList },
   ];
 
@@ -159,6 +164,17 @@ export default function Navbar() {
 
           {/* Right Actions: Theme Toggle + Profile Switcher */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* Voice & Sound Settings Button */}
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setIsVoiceModalOpen(true)}
+              className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 hover:border-indigo-500/40 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition shadow-sm"
+              title="Voice & Sound Settings"
+            >
+              <Volume2 className="w-4 h-4" />
+            </motion.button>
+
             {/* Theme Toggle Button */}
             <ThemeToggle variant="navbar" />
 
@@ -315,6 +331,13 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Voice & Sound Settings Modal */}
+      <VoiceSettingsModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        userId={activeUser?.id}
+      />
     </header>
   );
 }

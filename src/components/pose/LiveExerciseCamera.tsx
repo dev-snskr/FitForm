@@ -25,11 +25,17 @@ import {
   Lock,
   Timer,
   Clock,
+  Volume2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createExerciseAnalyzer, resolveExerciseId } from '@/lib/pose/analyzers/registry';
 import { IExerciseAnalyzer, ExerciseAnalysisResult } from '@/lib/pose/types';
 import { LandmarkPoint, smoothLandmarks } from '@/lib/pose/angleMath';
 import { drawPoseSkeleton } from '@/lib/pose/skeletonDrawing';
+import { getCorrectionPhrase, POSITIVE_CUES, PLANK_ANNOUNCEMENTS } from '@/lib/voice/phrases';
+import { globalSpeechScheduler } from '@/lib/voice/speechScheduler';
+import { getStoredVoiceSettings } from '@/lib/voice/voiceSettings';
+import VoiceSettingsModal from '../voice/VoiceSettingsModal';
 
 interface LiveExerciseCameraProps {
   exerciseName: string;
@@ -60,6 +66,29 @@ export default function LiveExerciseCamera({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isTrackingActive, setIsTrackingActive] = useState(false);
   const [analysis, setAnalysis] = useState<ExerciseAnalysisResult | null>(null);
+  const [captionText, setCaptionText] = useState<string | null>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const lastRepCountRef = useRef<number>(0);
+
+  // Subscribe to spoken captions
+  useEffect(() => {
+    const unsub = globalSpeechScheduler.addCaptionListener((cap) => {
+      setCaptionText(cap);
+    });
+    return unsub;
+  }, []);
+
+  // Update speech set-in-progress state
+  useEffect(() => {
+    if (isTrackingActive) {
+      globalSpeechScheduler.setSetInProgress(true);
+    } else {
+      globalSpeechScheduler.setSetInProgress(false);
+    }
+    return () => {
+      globalSpeechScheduler.setSetInProgress(false);
+    };
+  }, [isTrackingActive]);
 
   const exerciseId = resolveExerciseId(exerciseName);
   const isBicepCurl = exerciseId === 'bicep_curl';
@@ -365,6 +394,65 @@ export default function LiveExerciseCamera({
                 const res = analyzer.processFrame(smoothed, now);
                 setAnalysis(res);
 
+                // Voice Form Corrections
+                if (res.latestMistake && res.formStatus !== 'good') {
+                  const correction = getCorrectionPhrase(exerciseId || 'squat', res.latestMistake);
+                  if (correction) {
+                    globalSpeechScheduler.speak(
+                      {
+                        text: correction.phrase,
+                        priority: correction.priority,
+                        mistakeKey: `${exerciseId}_${res.latestMistake.toLowerCase()}`,
+                      },
+                      now
+                    );
+                  }
+                }
+
+                // Plank 10s countdown & completion announcements
+                if (isPlank && res.isTimedHold && res.isReady) {
+                  const targetSec = res.targetDurationSeconds || 45;
+                  const remaining = targetSec - (res.holdDurationSeconds || 0);
+                  if (remaining === 10) {
+                    globalSpeechScheduler.speak(
+                      {
+                        text: PLANK_ANNOUNCEMENTS.TEN_SECONDS_LEFT,
+                        priority: 85,
+                        mistakeKey: 'plank_10s_alert',
+                      },
+                      now
+                    );
+                  } else if (remaining <= 0) {
+                    globalSpeechScheduler.speak(
+                      {
+                        text: PLANK_ANNOUNCEMENTS.TARGET_REACHED,
+                        priority: 95,
+                        mistakeKey: 'plank_target_reached',
+                      },
+                      now
+                    );
+                  }
+                }
+
+                // Rep announcements or positive feedback
+                if (res.repCount > lastRepCountRef.current) {
+                  lastRepCountRef.current = res.repCount;
+                  const voiceCfg = getStoredVoiceSettings();
+                  if (voiceCfg.announceReps) {
+                    globalSpeechScheduler.speak(
+                      {
+                        text: String(res.repCount),
+                        priority: 25,
+                        mistakeKey: `rep_${res.repCount}`,
+                      },
+                      now
+                    );
+                  } else if (res.formStatus === 'good') {
+                    const cue = POSITIVE_CUES[res.repCount % POSITIVE_CUES.length];
+                    globalSpeechScheduler.maybeSpeakPositive(res.repCount, cue, now);
+                  }
+                }
+
                 // Draw smoothed skeleton over mirrored canvas
                 drawPoseSkeleton(
                   ctx,
@@ -403,10 +491,16 @@ export default function LiveExerciseCamera({
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
-  }, [isTrackingActive, handleFinishSet]);
+  }, [isTrackingActive, handleFinishSet, exerciseId, isPlank]);
 
   return (
     <div className="w-full space-y-6">
+      {/* Voice Settings Modal */}
+      <VoiceSettingsModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+      />
+
       {/* Privacy & Setup Guide Notice */}
       <div className="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border border-indigo-500/20">
         <div className="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
@@ -473,6 +567,15 @@ export default function LiveExerciseCamera({
             </div>
           )}
 
+          <button
+            type="button"
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="p-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition shadow-sm"
+            title="Voice & Sound Settings"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+
           <div className="inline-flex items-center space-x-1.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
             <Lock className="w-3.5 h-3.5 text-indigo-500" />
             <span>Your camera video stays on your device</span>
@@ -522,6 +625,21 @@ export default function LiveExerciseCamera({
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
               />
+
+              {/* On-screen Spoken Caption Toast */}
+              <AnimatePresence>
+                {captionText && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute top-14 left-1/2 transform -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-slate-950/90 border border-cyan-400/40 text-cyan-300 text-xs font-bold shadow-2xl backdrop-blur-md flex items-center space-x-2 pointer-events-none whitespace-nowrap"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 animate-pulse" />
+                    <span>{captionText}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Loading State */}
               {isLoadingModel && (

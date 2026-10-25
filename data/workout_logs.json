@@ -1,5 +1,140 @@
 [
   {
+    "id": 49,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 5,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 2,
+    "reps": 10,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 150,
+    "mode": "manual",
+    "completedAt": "2026-10-25T16:04:29.304Z"
+  },
+  {
+    "id": 48,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 5,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 10,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 24,
+    "mode": "manual",
+    "completedAt": "2026-10-25T16:04:02.470Z"
+  },
+  {
+    "id": 47,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 1,
+    "exercise": "Squat",
+    "setNumber": 1,
+    "reps": 12,
+    "durationSeconds": null,
+    "formScore": 92,
+    "mistakes": "[\"Knees caving in\"]",
+    "restSeconds": 84,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T15:57:22.125Z"
+  },
+  {
+    "id": 46,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Push-Up",
+    "setNumber": 1,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:22.609Z"
+  },
+  {
+    "id": 45,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 5,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:19.054Z"
+  },
+  {
+    "id": 44,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 4,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:14.559Z"
+  },
+  {
+    "id": 43,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 3,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:11.224Z"
+  },
+  {
+    "id": 42,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 2,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:07.429Z"
+  },
+  {
+    "id": 41,
+    "userId": 3,
+    "userName": "Sanskar",
+    "dayNumber": 8,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 11,
+    "durationSeconds": null,
+    "formScore": null,
+    "mistakes": "[]",
+    "restSeconds": 145,
+    "mode": "manual",
+    "completedAt": "2026-10-25T15:28:02.168Z"
+  },
+  {
     "id": 40,
     "userId": 3,
     "userName": "Sanskar",
@@ -9,9 +144,7 @@
     "reps": 0,
     "durationSeconds": 45,
     "formScore": 92,
-    "mistakes": [
-      "Hips sagged slightly at 35s"
-    ],
+    "mistakes": "[\"Hips sagged slightly at 35s\"]",
     "restSeconds": 45,
     "mode": "live_camera",
     "completedAt": "2026-10-25T14:02:19.527Z"
@@ -26,7 +159,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 95,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T14:02:19.492Z"
@@ -41,9 +174,7 @@
     "reps": 0,
     "durationSeconds": 45,
     "formScore": 92,
-    "mistakes": [
-      "Hips sagged slightly at 35s"
-    ],
+    "mistakes": "[\"Hips sagged slightly at 35s\"]",
     "restSeconds": 45,
     "mode": "live_camera",
     "completedAt": "2026-10-25T14:01:51.501Z"
@@ -58,7 +189,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 95,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T14:01:51.460Z"
@@ -73,7 +204,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:39:23.458Z"
@@ -88,11 +219,7 @@
     "reps": 19,
     "durationSeconds": null,
     "formScore": 76,
-    "mistakes": [
-      "Not curling high enough",
-      "Swinging your body",
-      "Too fast"
-    ],
+    "mistakes": "[\"Not curling high enough\",\"Swinging your body\",\"Too fast\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T13:38:57.902Z"
@@ -107,7 +234,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:37:18.357Z"
@@ -122,7 +249,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:37:14.322Z"
@@ -137,7 +264,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:37:10.534Z"
@@ -152,7 +279,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:37:07.339Z"
@@ -167,7 +294,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T13:37:01.390Z"
@@ -182,9 +309,7 @@
     "reps": 14,
     "durationSeconds": null,
     "formScore": 80,
-    "mistakes": [
-      "Swinging your body"
-    ],
+    "mistakes": "[\"Swinging your body\"]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T13:30:14.151Z"
@@ -199,9 +324,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 85,
-    "mistakes": [
-      "Go lower"
-    ],
+    "mistakes": "[\"Go lower\"]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T13:30:14.092Z"
@@ -216,9 +339,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": 92,
-    "mistakes": [
-      "Not deep enough"
-    ],
+    "mistakes": "[\"Not deep enough\"]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T13:30:14.025Z"
@@ -233,7 +354,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:33:26.257Z"
@@ -248,10 +369,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 93,
-    "mistakes": [
-      "Too fast — control your descent",
-      "Not deep enough"
-    ],
+    "mistakes": "[\"Too fast — control your descent\",\"Not deep enough\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T12:33:08.195Z"
@@ -266,7 +384,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:14:03.483Z"
@@ -281,7 +399,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:13:54.695Z"
@@ -296,7 +414,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:13:51.147Z"
@@ -311,7 +429,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:13:44.894Z"
@@ -326,7 +444,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T12:13:39.589Z"
@@ -341,7 +459,7 @@
     "reps": 0,
     "durationSeconds": null,
     "formScore": 100,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T12:13:27.190Z"
@@ -356,7 +474,7 @@
     "reps": 0,
     "durationSeconds": null,
     "formScore": 100,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T12:13:27.132Z"
@@ -371,7 +489,7 @@
     "reps": 0,
     "durationSeconds": null,
     "formScore": 100,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T12:13:27.132Z"
@@ -386,7 +504,7 @@
     "reps": 0,
     "durationSeconds": null,
     "formScore": 100,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T12:13:27.132Z"
@@ -401,10 +519,7 @@
     "reps": 11,
     "durationSeconds": null,
     "formScore": 83,
-    "mistakes": [
-      "Too fast — control your descent",
-      "Not deep enough"
-    ],
+    "mistakes": "[\"Too fast — control your descent\",\"Not deep enough\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T11:08:29.691Z"
@@ -419,7 +534,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T11:07:16.773Z"
@@ -434,7 +549,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T11:07:13.311Z"
@@ -449,7 +564,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T11:07:09.625Z"
@@ -464,7 +579,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T11:07:04.801Z"
@@ -479,7 +594,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "manual",
     "completedAt": "2026-10-25T11:06:57.647Z"
@@ -494,9 +609,7 @@
     "reps": 2,
     "durationSeconds": null,
     "formScore": 75,
-    "mistakes": [
-      "Not deep enough"
-    ],
+    "mistakes": "[\"Not deep enough\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T10:58:41.317Z"
@@ -511,9 +624,7 @@
     "reps": 2,
     "durationSeconds": null,
     "formScore": 75,
-    "mistakes": [
-      "Not deep enough"
-    ],
+    "mistakes": "[\"Not deep enough\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T10:58:41.317Z"
@@ -528,9 +639,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": 94,
-    "mistakes": [
-      "Keep elbows tucked at 45 degrees"
-    ],
+    "mistakes": "[\"Keep elbows tucked at 45 degrees\"]",
     "restSeconds": 90,
     "mode": "live_camera",
     "completedAt": "2026-10-25T10:47:37.268Z"
@@ -545,9 +654,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": 92,
-    "mistakes": [
-      "Not deep enough on rep 8"
-    ],
+    "mistakes": "[\"Not deep enough on rep 8\"]",
     "restSeconds": 45,
     "mode": "live_camera",
     "completedAt": "2026-10-25T10:47:00.580Z"
@@ -562,7 +669,7 @@
     "reps": 15,
     "durationSeconds": null,
     "formScore": null,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 60,
     "mode": "manual",
     "completedAt": "2026-10-25T10:47:00.535Z"
@@ -577,9 +684,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": 94,
-    "mistakes": [
-      "Keep elbows tucked at 45 degrees"
-    ],
+    "mistakes": "[\"Keep elbows tucked at 45 degrees\"]",
     "restSeconds": 90,
     "mode": "live_camera",
     "completedAt": "2026-10-25T09:59:04.148Z"
@@ -594,9 +699,7 @@
     "reps": 12,
     "durationSeconds": null,
     "formScore": 92,
-    "mistakes": [
-      "Knees caved slightly inward on rep 10"
-    ],
+    "mistakes": "[\"Knees caved slightly inward on rep 10\"]",
     "restSeconds": 60,
     "mode": "live_camera",
     "completedAt": "2026-10-25T07:15:57.030Z"
@@ -611,7 +714,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 96,
-    "mistakes": [],
+    "mistakes": "[]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T06:58:45.844Z"
@@ -626,9 +729,7 @@
     "reps": 10,
     "durationSeconds": null,
     "formScore": 94.5,
-    "mistakes": [
-      "Knees slight valgus on rep 8"
-    ],
+    "mistakes": "[\"Knees slight valgus on rep 8\"]",
     "restSeconds": 150,
     "mode": "live_camera",
     "completedAt": "2026-10-25T06:16:47.297Z"
