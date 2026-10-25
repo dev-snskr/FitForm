@@ -1,5 +1,21 @@
 [
   {
+    "id": 3,
+    "userId": 1,
+    "userName": "Alex Johnson",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 12,
+    "formScore": 92,
+    "mistakes": [
+      "Knees caved slightly inward on rep 10"
+    ],
+    "restSeconds": 60,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T07:15:57.030Z"
+  },
+  {
     "id": 2,
     "userId": 1,
     "userName": "Alex Johnson",

@@ -108,8 +108,53 @@ The `<AnimatedBackground />` component exposes props:
    - Animated drifting gradient blobs + canvas particle background.
    - Scroll-reveal staggered cards, table rows, and interactive hover lifts.
 
-### Step 2 – Diet by Budget Page
-- Diet recommendation page based on user budget.
+### Step 2 – Diet by Budget Page (COMPLETED)
+1. **Editable Food Database (`src/lib/foodData.ts`)**
+   - 37 affordable, staple Indian foods with authentic Hindi names, portion sizes, prices in INR (₹), calories, protein, carbs, fat, category (`protein`, `carb`, `vegetable`, `fruit`, `fat`), and diet type (`vegetarian`, `eggetarian`, `non-vegetarian`).
+   - Includes price/nutrition disclaimer note on UI: *"Prices and nutrition values are approximate and can be edited in foodData.ts"*.
+   - Engineered for reuse by the Step 8 calorie tracker.
+   - Built-in ranking function for top cost-efficient protein sources (`proteinPerRupee`).
+
+2. **Scientific Nutrition Calculator (`src/lib/nutrition.ts`)**
+   - BMR computed via the gold-standard **Mifflin-St Jeor equation**:
+     - Men: `(10 × weight_kg) + (6.25 × height_cm) - (5 × age) + 5`
+     - Women: `(10 × weight_kg) + (6.25 × height_cm) - (5 × age) - 161`
+   - TDEE Activity Multipliers calibrated to workout days per week:
+     - 3 days: 1.375 (moderately active)
+     - 4–5 days: 1.55 (active)
+     - 6 days: 1.725 (very active)
+   - Goal Adjustments:
+     - Fat loss: -400 kcal deficit (with strict safety floor of 1200 kcal for women, 1500 kcal for men)
+     - Muscle gain: +300 kcal surplus
+     - Maintain: 0 kcal adjustment
+   - Macronutrient Distribution:
+     - Protein: 2.0 g/kg (muscle gain), 1.8 g/kg (fat loss), 1.5 g/kg (maintain)
+     - Fats: 25% of daily target calories (9 kcal/g)
+     - Carbs: Remainder of daily target calories (4 kcal/g)
+   - Plain-language explanations displayed clearly for beginners.
+
+3. **Deterministic Meal Planner (`src/lib/mealPlanner.ts`)**
+   - Zero AI, zero random or unpredictable calls. 100% deterministic optimization.
+   - Splits nutrition across 4 distinct meals: Breakfast, Lunch, Evening Snack, Dinner.
+   - Respects user budget cap, diet type, and excluded foods.
+   - Variety algorithm prevents excessive repetition of any single ingredient across meals.
+   - Honest budget diagnostics: when budget is low, displays transparent status message (e.g. *"With ₹70/day, you can reach about 66% of your daily protein target..."*) alongside actionable recommendations.
+   - Interactive Food Swapping: users can swap any individual food item for a nutritionally comparable alternative in the same category without breaking budget constraints.
+
+4. **Diet Page (`/diet`) & Persistence**
+   - Interactive budget slider (₹30 to ₹600/day) with direct number input.
+   - Diet type selector (Vegetarian, Eggetarian, Non-Vegetarian).
+   - Multi-select food exclusion filter.
+   - Memory: persists choices per user in `localStorage`.
+   - Cards:
+     - Mifflin-St Jeor breakdown card with plain-language metabolic guidance.
+     - Honest budget diagnostics with animated target progress bars (Cost, Calories, Protein).
+     - 4 Meal Cards with quantity, calories, protein, price, and functional Swap buttons.
+     - Top Cheapest Indian Protein Sources table ranked by protein per rupee.
+     - Previous Saved Plans history list.
+     - Medical guidance disclaimer.
+   - Export: one-click "Export Diet JSON" with formatted `attachment` download.
+   - Persists all generated diet plans to SQLite `DietPlan` table.
 
 ### Step 3 – Live Camera Form Checking
 - MediaPipe Pose integration for real-time form analysis.
@@ -194,6 +239,22 @@ The `<AnimatedBackground />` component exposes props:
 | restSeconds    | Int      |
 | mode           | String   |
 | completedAt    | DateTime |
+
+### DietPlan
+| Field          | Type     |
+|----------------|----------|
+| id             | Int PK   |
+| userId         | Int FK   |
+| budget         | Float    |
+| dietType       | String   |
+| excludedFoods  | String?  |
+| targetCalories | Int      |
+| targetProtein  | Float    |
+| totalCost      | Float    |
+| totalCalories  | Int      |
+| totalProtein   | Float    |
+| mealsJson      | String   |
+| createdAt      | DateTime |
 
 ---
 

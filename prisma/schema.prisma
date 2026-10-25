@@ -23,6 +23,7 @@ model User {
   createdAt   DateTime     @default(now())
   workoutDays WorkoutDay[]
   logs        WorkoutLog[]
+  dietPlans   DietPlan[]
 }
 
 model WorkoutDay {
@@ -65,4 +66,20 @@ model WorkoutLog {
   restSeconds Int
   mode        String   // "live_camera" or "video_upload"
   completedAt DateTime @default(now())
+}
+
+model DietPlan {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget         Float
+  dietType       String   // "vegetarian" | "eggetarian" | "non-vegetarian"
+  excludedFoods  String   // JSON string of excluded food IDs
+  targetCalories Int
+  targetProtein  Float
+  totalCost      Float
+  totalCalories  Int
+  totalProtein   Float
+  mealsJson      String   // JSON array of meals with food items
+  createdAt      DateTime @default(now())
 }

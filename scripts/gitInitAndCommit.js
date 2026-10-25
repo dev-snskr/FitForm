@@ -57,7 +57,7 @@ async function main() {
   const sha = await git.commit({
     fs,
     dir,
-    message: 'UI Upgrade: Dark/Light theming, animated background layer, and Framer Motion interactions',
+    message: 'Step 2: Implement Diet by Budget page with Mifflin-St Jeor nutrition calculator, deterministic meal planner, food database, and SQLite persistence',
     author: {
       name: 'FitForm Developer',
       email: 'developer@fitform.local',
