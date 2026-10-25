@@ -103,31 +103,6 @@ export default function AnimatedBackground({
     let originY = 0;
     let diagonal = 0;
 
-    const handleResize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      width = window.innerWidth;
-      height = window.innerHeight;
-
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      // Origin point: ~70% across and ~35% down
-      originX = width * 0.7;
-      originY = height * 0.35;
-      diagonal = Math.hypot(width, height);
-
-      if (isStatic) {
-        drawFrame(0, 0);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
     // Rotation & smooth easing system
     // Random initial direction & speed
     let currentSpeed = (Math.random() > 0.5 ? 1 : -1) * (0.0006 + Math.random() * 0.001);
@@ -140,7 +115,7 @@ export default function AnimatedBackground({
     let lastFrameTime = performance.now();
     const frameInterval = 1000 / 30; // ~33.33ms
 
-    // Frame Drawing Routine
+    // Frame Drawing Routine - defined first before handleResize or animate call it
     const drawFrame = (rotAngle: number, timeMs: number) => {
       ctx.clearRect(0, 0, width, height);
 
@@ -202,6 +177,32 @@ export default function AnimatedBackground({
       }
     };
 
+    const handleResize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Origin point: ~70% across and ~35% down
+      originX = width * 0.7;
+      originY = height * 0.35;
+      diagonal = Math.hypot(width, height);
+
+      if (isStatic) {
+        drawFrame(0, 0);
+      }
+    };
+
+    // Initial canvas sizing and resize listener
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     // Render loop for full animation mode
     const animate = (now: number) => {
       if (!isTabVisible) return;
@@ -232,6 +233,7 @@ export default function AnimatedBackground({
     // Handle Tab Visibility (Pause completely when hidden)
     const handleVisibilityChange = () => {
       isTabVisible = !document.hidden;
+      cancelAnimationFrame(animationFrameId);
       if (isTabVisible && !isStatic) {
         lastFrameTime = performance.now();
         animationFrameId = requestAnimationFrame(animate);

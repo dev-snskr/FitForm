@@ -57,7 +57,7 @@ async function main() {
   const sha = await git.commit({
     fs,
     dir,
-    message: 'Step 3A: Implement interactive workout session flow, on-device MediaPipe Pose squat checking, and developer pose simulation studio',
+    message: 'Fix: resolve drawFrame initialization ReferenceError and harden background lifecycle',
     author: {
       name: 'FitForm Developer',
       email: 'developer@fitform.local',
