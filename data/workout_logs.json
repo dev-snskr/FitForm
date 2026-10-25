@@ -1,5 +1,19 @@
 [
   {
+    "id": 2,
+    "userId": 1,
+    "userName": "Alex Johnson",
+    "dayNumber": 2,
+    "exercise": "Push-Up",
+    "setNumber": 1,
+    "reps": 10,
+    "formScore": 96,
+    "mistakes": [],
+    "restSeconds": 150,
+    "mode": "live_camera",
+    "completedAt": "2026-10-25T06:58:45.844Z"
+  },
+  {
     "id": 1,
     "userId": 1,
     "userName": "Alex Johnson",

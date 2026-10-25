@@ -2,18 +2,75 @@
 
 ## Tech Stack
 - **Framework:** Next.js 14 (App Router) + TypeScript
-- **Styling:** Tailwind CSS (glassmorphism design)
+- **Styling:** Tailwind CSS (custom dark & light glassmorphism design)
+- **Theming:** `next-themes` (system-default, user memory, zero hydration flash)
+- **Animations:** `framer-motion` (scroll-reveal, staggered waves, layout transitions, reduced-motion compliance)
 - **Database:** SQLite via Prisma ORM (file-based, no cloud services)
 - **No external accounts, API keys, or cloud services**
 
 ## Design Language
-Modern glassmorphism: dark gradient background, frosted translucent cards with backdrop-blur, soft borders, subtle glow, rounded corners, smooth hover/transition effects, clean readable font. Responsive (mobile + desktop).
+Modern glassmorphism:
+- **Dark Mode:** Deep midnight radial gradient background, frosted translucent navy cards with backdrop-blur, soft borders, subtle indigo/cyan glow, rounded corners.
+- **Light Mode:** Luminous pastel gradient background, white frosted cards with soft shadows, subtle borders, high-contrast dark slate text for effortless readability.
+- **Responsive:** Fluid layout from mobile phone screens to widescreen desktop displays.
+
+---
+
+## Theming & Animation Architecture
+
+### 1. Theme System (`next-themes`)
+- **Theme Provider:** Wrapped in [`src/components/ThemeProvider.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/ThemeProvider.tsx) with `attribute="class"`, `defaultTheme="system"`, and `enableSystem={true}`.
+- **Theme Variables:** Defined in [`src/app/globals.css`](file:///c:/Users/Sanskar/Desktop/cep2/src/app/globals.css) via CSS custom properties (`--card-bg`, `--card-border`, `--foreground`, `--background`, `--input-bg`, etc.).
+- **Theme Toggle:** [`src/components/ThemeToggle.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/ThemeToggle.tsx):
+  - In the Navbar: Sun/Moon button on all pages with smooth rotation/scale micro-animations.
+  - On `/onboarding`: Floating top-right toggle since the main navbar is hidden.
+  - Behavior: Defaults to device setting, persists user choice in `localStorage`, zero theme flash.
+
+### 2. Animated Background Layer
+- Component: [`src/components/AnimatedBackground.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/AnimatedBackground.tsx)
+- Renders:
+  - 3 large, slowly drifting blurred gradient blobs (hardware-accelerated CSS keyframes).
+  - Subtle floating particles via HTML5 Canvas (capped at 24 particles).
+  - Theme-aware palette (deep blue/purple/cyan in dark mode; soft pastel lavender/sky/rose in light mode).
+- Performance & Accessibility:
+  - Automatically pauses when the browser tab is hidden (`document.hidden` event listener).
+  - Respects system accessibility `prefers-reduced-motion`: pauses movement and displays a static soft gradient.
+  - Fixed behind content with `pointer-events-none -z-10`, never obstructing clicks or interfering with content.
+
+#### How to Disable or Customize the Background on Specific Pages (e.g. Camera in Step 3)
+The `<AnimatedBackground />` component exposes props:
+- `enabled={false}`: Completely turns off the background (ideal for full-screen camera form checking).
+- `showParticles={false}`: Keeps the soft gradient blobs but disables canvas particle computations.
+- Custom usage example:
+  ```tsx
+  import AnimatedBackground from '@/components/AnimatedBackground';
+
+  export default function CameraWorkoutPage() {
+    return (
+      <>
+        {/* Turn off background during live camera tracking to save CPU/GPU */}
+        <AnimatedBackground enabled={false} />
+        <div>... camera UI ...</div>
+      </>
+    );
+  }
+  ```
+
+### 3. Scroll-Reveal & Interaction Animations (`framer-motion`)
+- Staggered wave entrance for Day 1 to Day 30 cards on `/plan`.
+- Staggered fade-and-slide entrance for telemetry rows on `/logs`.
+- Section animations on `/onboarding`.
+- Micro-interactions:
+  - Cards: `whileHover={{ y: -3 }}` with glowing border effect.
+  - Buttons: `whileTap={{ scale: 0.98 }}`.
+  - Navbar: Sliding active link indicator (`layoutId="navbar-indicator"`).
+- Automatically checks `useReducedMotion()` from `framer-motion` to disable transforms when reduced-motion is requested.
 
 ---
 
 ## Build Order & Steps
 
-### Step 1 – Core App (THIS STEP)
+### Step 1 – Core App (COMPLETED)
 1. **Onboarding page (`/onboarding`)**
    - Fields: name, age, gender (male/female/other), height (cm), weight (kg), goal (fat loss/muscle gain/maintain), experience (beginner/intermediate/advanced), workout days per week (3–6).
    - Validation: age 13–80, height 100–230 cm, weight 30–250 kg. Clear error messages. Never save invalid data.
@@ -26,13 +83,13 @@ Modern glassmorphism: dark gradient background, frosted translucent cards with b
    - Primary exercises: squat, push-up, bicep curl, lunge, plank. Extras: jumping jacks, glute bridge, mountain climbers (marked "form check coming later").
    - Each exercise: name, target muscles, sets, reps (or seconds), rest seconds.
    - Volume adjusted by experience level.
-   - Exercise data in a single separate file.
+   - Exercise data in a single separate file ([`src/lib/exerciseData.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/exerciseData.ts)).
 
 3. **Plan page (`/plan`)**
    - Grid of Day 1–30 cards. Each shows day number, workout type or "Rest day", status (not started/completed from logs).
    - Click → `/plan/[day]` with exercises, sets, reps, rest. "Start workout" button disabled, labelled "Coming in Step 3".
 
-4. **Navigation bar** on every page except onboarding: Workout, Diet, Logs. Highlights current page.
+4. **Navigation bar** on every page except onboarding: Workout, Diet, Logs. Highlights current page with sliding Framer Motion pill.
    - Diet page (`/diet`): placeholder "Coming in Step 2".
 
 5. **Logs page (`/logs`)**
@@ -45,6 +102,11 @@ Modern glassmorphism: dark gradient background, frosted translucent cards with b
 6. **Returning users**
    - Browser remembers user (localStorage). Profile exists → go to `/plan`.
    - "Create new profile" option. Support multiple profiles.
+
+7. **Theme & Animation Layer**
+   - Dark & Light mode toggle with system preference sync and zero hydration flash.
+   - Animated drifting gradient blobs + canvas particle background.
+   - Scroll-reveal staggered cards, table rows, and interactive hover lifts.
 
 ### Step 2 – Diet by Budget Page
 - Diet recommendation page based on user budget.
@@ -72,8 +134,7 @@ Modern glassmorphism: dark gradient background, frosted translucent cards with b
 - Guided warm-up and cool-down routines.
 - Daily calorie and water intake tracking.
 
-### Step 9 – Dark/Light Toggle + PWA + Weekly PDF
-- Theme toggle (dark/light mode).
+### Step 9 – PWA + Weekly PDF
 - Progressive Web App for offline use.
 - Weekly progress report as downloadable PDF.
 
@@ -138,40 +199,6 @@ Modern glassmorphism: dark gradient background, frosted translucent cards with b
 
 ## Log File Format
 `data/workout_logs.json` – regenerated from DB after every write. Array of log objects matching the WorkoutLog schema.
-
----
-
-## Folder Structure
-```
-src/
-  app/
-    layout.tsx          – root layout with dark gradient background
-    page.tsx            – redirect logic (to /onboarding or /plan)
-    onboarding/page.tsx – onboarding form
-    plan/page.tsx       – 30-day plan grid
-    plan/[day]/page.tsx – single day detail
-    diet/page.tsx       – placeholder
-    logs/page.tsx       – logs table + exports
-    api/
-      users/route.ts    – create/list users
-      plan/route.ts     – get plan for user
-      logs/route.ts     – create/list/export logs
-  components/
-    Navbar.tsx          – navigation bar
-    GlassCard.tsx       – reusable glass card
-    ...
-  lib/
-    prisma.ts           – Prisma client singleton
-    planGenerator.ts    – 30-day plan generation
-    exerciseData.ts     – exercise definitions (separate file)
-    syncLogs.ts         – sync logs to JSON file
-    validation.ts       – form validation
-data/
-  workout_logs.json     – synced log file
-prisma/
-  schema.prisma         – database schema
-  dev.db                – SQLite database file
-```
 
 ---
 

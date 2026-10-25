@@ -51,11 +51,11 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4 animate-pulse">
-        <Dumbbell className="w-8 h-8 text-indigo-400" />
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center mb-4 animate-pulse">
+        <Dumbbell className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
       </div>
-      <h1 className="text-xl font-bold text-white mb-2">Loading FitForm...</h1>
-      <p className="text-sm text-slate-400">Checking your workout profile</p>
+      <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Loading FitForm...</h1>
+      <p className="text-sm text-slate-600 dark:text-slate-400">Checking your workout profile</p>
     </div>
   );
 }

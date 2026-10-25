@@ -52,12 +52,12 @@ async function main() {
     await git.add({ fs, dir, filepath });
   }
 
-  // 3. Make initial commit
-  console.log('Creating initial commit...');
+  // 3. Make commit
+  console.log('Creating commit...');
   const sha = await git.commit({
     fs,
     dir,
-    message: 'Initial commit: FitForm Step 1 complete with onboarding, 30-day plan, and logs',
+    message: 'UI Upgrade: Dark/Light theming, animated background layer, and Framer Motion interactions',
     author: {
       name: 'FitForm Developer',
       email: 'developer@fitform.local',

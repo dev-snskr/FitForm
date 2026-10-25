@@ -1,8 +1,10 @@
 'use client';
 
 // FitForm Workout Logs Page (/logs)
-// Displays a history table of all workout performance records (newest first).
-// Provides export to JSON and CSV, and a dev-only 'Add test log' button.
+// Upgraded with:
+// - Framer Motion staggered entrance animations on table rows.
+// - High-contrast Light & Dark mode support across table headers, rows, badges, and export buttons.
+// - Smooth tap and hover micro-interactions.
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -16,6 +18,7 @@ import {
   Camera,
   Video,
 } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { getStoredActiveUserId } from '@/lib/profileStorage';
 
 interface LogItem {
@@ -34,13 +37,14 @@ interface LogItem {
 }
 
 export default function LogsPage() {
+  const shouldReduceMotion = useReducedMotion();
+
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAddingTestLog, setIsAddingTestLog] = useState<boolean>(false);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
 
-  // Check if running in development mode
   const isDevMode = process.env.NODE_ENV !== 'production';
 
   const fetchLogs = async () => {
@@ -65,14 +69,12 @@ export default function LogsPage() {
     fetchLogs();
   }, []);
 
-  // Add Test Log Handler (Visible in development)
   const handleAddTestLog = async () => {
     setIsAddingTestLog(true);
     setActionSuccessMessage(null);
     setErrorMessage(null);
 
     try {
-      // Find active user or fetch first user
       let userId = getStoredActiveUserId();
       let userName = 'Alex Johnson';
 
@@ -89,7 +91,6 @@ export default function LogsPage() {
       }
 
       if (!userId) {
-        // If no user exists at all, prompt user
         setErrorMessage('Please create a profile in Onboarding first before adding logs.');
         setIsAddingTestLog(false);
         return;
@@ -104,7 +105,7 @@ export default function LogsPage() {
       ];
 
       const sample = sampleExercises[Math.floor(Math.random() * sampleExercises.length)];
-      const randomScore = Math.floor(Math.random() * 15) + 85; // 85 - 99 score
+      const randomScore = Math.floor(Math.random() * 15) + 85;
 
       const payload = {
         userId,
@@ -133,7 +134,6 @@ export default function LogsPage() {
       setActionSuccessMessage(
         `Test log recorded for ${userName} (${sample.name}, Day ${sample.day}). data/workout_logs.json synchronized!`
       );
-      // Reload logs table
       await fetchLogs();
     } catch (err: unknown) {
       console.error('Test log creation error:', err);
@@ -149,18 +149,45 @@ export default function LogsPage() {
     window.location.href = `/api/logs?format=${format}`;
   };
 
+  // Animation variants
+  const tableContainerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.03,
+      },
+    },
+  };
+
+  const rowVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: 'easeOut' },
+    },
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       {/* Page Header */}
-      <div className="glass-panel rounded-2xl p-6 sm:p-8 mb-8 border border-white/10">
+      <motion.div
+        initial={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="glass-panel rounded-2xl p-6 sm:p-8 mb-8"
+      >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center space-x-2 text-indigo-400 mb-1">
+            <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-1">
               <ClipboardList className="w-5 h-5" />
               <span className="text-xs font-bold uppercase tracking-wider">Exercise Telemetry</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Workout Logs</h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+              Workout Logs
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               All logged training sessions, rep performance, form scores, and detected corrections.
             </p>
           </div>
@@ -168,34 +195,40 @@ export default function LogsPage() {
           {/* Action Buttons: Export + Dev Test Button */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Export JSON */}
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ y: shouldReduceMotion ? 0 : -1 }}
               onClick={() => handleExport('json')}
               disabled={logs.length === 0}
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm cursor-pointer"
             >
-              <FileJson className="w-4 h-4 text-amber-400" />
+              <FileJson className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               <span>Export JSON</span>
-            </button>
+            </motion.button>
 
             {/* Export CSV */}
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ y: shouldReduceMotion ? 0 : -1 }}
               onClick={() => handleExport('csv')}
               disabled={logs.length === 0}
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm cursor-pointer"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Export CSV</span>
-            </button>
+            </motion.button>
 
             {/* Dev Mode Only: Add Test Log */}
             {isDevMode && (
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: shouldReduceMotion ? 0 : -1 }}
                 onClick={handleAddTestLog}
                 disabled={isAddingTestLog}
-                className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition disabled:opacity-50"
+                className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition disabled:opacity-50 cursor-pointer"
               >
                 {isAddingTestLog ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -203,41 +236,54 @@ export default function LogsPage() {
                   <PlusCircle className="w-4 h-4" />
                 )}
                 <span>Add Test Log (Dev)</span>
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
 
         {/* Action feedback notifications */}
         {actionSuccessMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center space-x-2 text-emerald-300 text-xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center space-x-2 text-emerald-700 dark:text-emerald-300 text-xs font-medium"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <span>{actionSuccessMessage}</span>
-          </div>
+          </motion.div>
         )}
 
         {errorMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center space-x-2 text-red-300 text-xs">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-center space-x-2 text-red-700 dark:text-red-300 text-xs font-medium"
+          >
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
             <span>{errorMessage}</span>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="glass-panel rounded-2xl p-12 text-center border border-white/10">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-300">Retrieving logs from database...</p>
+        <div className="glass-panel rounded-2xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-600 dark:text-slate-300">Retrieving logs from database...</p>
         </div>
       ) : logs.length === 0 ? (
         /* Empty State */
-        <div className="glass-panel rounded-2xl p-12 text-center border border-white/10">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35 }}
+          className="glass-panel rounded-2xl p-12 text-center"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-600/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400">
             <ClipboardList className="w-8 h-8" />
           </div>
-          <h2 className="text-lg font-bold text-white mb-2">No Workout Logs Yet</h2>
-          <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Workout Logs Yet</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto mb-6">
             Completed workouts and form assessments will appear here automatically.
             {isDevMode && ' You can click "Add Test Log (Dev)" above to insert a sample record and verify file sync.'}
           </p>
@@ -246,20 +292,20 @@ export default function LogsPage() {
               type="button"
               onClick={handleAddTestLog}
               disabled={isAddingTestLog}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition"
+              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Generate Sample Dev Log</span>
             </button>
           )}
-        </div>
+        </motion.div>
       ) : (
-        /* Logs Table */
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+        /* Logs Table with Staggered Entrance */
+        <div className="glass-panel rounded-2xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/10 bg-slate-900/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/60 text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-4">User</th>
                   <th className="py-3.5 px-4">Day</th>
                   <th className="py-3.5 px-4">Exercise</th>
@@ -272,7 +318,12 @@ export default function LogsPage() {
                   <th className="py-3.5 px-4">Timestamp</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-xs text-slate-300">
+              <motion.tbody
+                variants={tableContainerVariants}
+                initial="hidden"
+                animate="show"
+                className="divide-y divide-slate-100 dark:divide-white/5 text-xs text-slate-700 dark:text-slate-300"
+              >
                 {logs.map((log) => {
                   const dateFormatted = new Date(log.completedAt).toLocaleString(undefined, {
                     month: 'short',
@@ -282,34 +333,35 @@ export default function LogsPage() {
                   });
 
                   return (
-                    <tr
+                    <motion.tr
                       key={log.id}
-                      className="hover:bg-white/[0.03] transition-colors"
+                      variants={rowVariants}
+                      className="hover:bg-slate-500/5 dark:hover:bg-white/[0.03] transition-colors"
                     >
                       {/* User */}
-                      <td className="py-3.5 px-4 font-semibold text-white whitespace-nowrap">
+                      <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                         {log.userName}
                       </td>
 
                       {/* Day */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold">
+                        <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
                           Day {log.dayNumber}
                         </span>
                       </td>
 
                       {/* Exercise */}
-                      <td className="py-3.5 px-4 font-medium text-slate-200 whitespace-nowrap">
+                      <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                         {log.exercise}
                       </td>
 
                       {/* Set */}
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-300">
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-700 dark:text-slate-300">
                         #{log.setNumber}
                       </td>
 
                       {/* Reps */}
-                      <td className="py-3.5 px-4 text-center font-bold text-indigo-300">
+                      <td className="py-3.5 px-4 text-center font-bold text-indigo-600 dark:text-indigo-300">
                         {log.reps}
                       </td>
 
@@ -319,16 +371,16 @@ export default function LogsPage() {
                           <span
                             className={`px-2 py-0.5 rounded-full font-bold text-[11px] border ${
                               log.formScore >= 90
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
                                 : log.formScore >= 75
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                                : 'bg-red-500/10 text-red-400 border-red-500/30'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
+                                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
                             }`}
                           >
                             {Math.round(log.formScore)}%
                           </span>
                         ) : (
-                          <span className="text-slate-500 text-[11px]">N/A</span>
+                          <span className="text-slate-400 text-[11px]">N/A</span>
                         )}
                       </td>
 
@@ -339,14 +391,14 @@ export default function LogsPage() {
                             {log.mistakes.map((m, idx) => (
                               <span
                                 key={idx}
-                                className="px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-300 text-[10px]"
+                                className="px-2 py-0.5 rounded bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 text-[10px]"
                               >
                                 {m}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="inline-flex items-center text-emerald-400 text-[11px]">
+                          <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Clean Form
                           </span>
@@ -354,21 +406,21 @@ export default function LogsPage() {
                       </td>
 
                       {/* Rest */}
-                      <td className="py-3.5 px-4 text-center font-medium text-slate-400 whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-center font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {log.restSeconds}s
                       </td>
 
                       {/* Mode */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] bg-slate-800/80 border border-white/10 text-slate-300">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300">
                           {log.mode === 'live_camera' ? (
                             <>
-                              <Camera className="w-3 h-3 text-cyan-400" />
+                              <Camera className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
                               <span>Live Camera</span>
                             </>
                           ) : (
                             <>
-                              <Video className="w-3 h-3 text-purple-400" />
+                              <Video className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                               <span>Video Upload</span>
                             </>
                           )}
@@ -376,13 +428,13 @@ export default function LogsPage() {
                       </td>
 
                       {/* Date/Time */}
-                      <td className="py-3.5 px-4 text-slate-400 text-[11px] whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap">
                         {dateFormatted}
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         </div>
