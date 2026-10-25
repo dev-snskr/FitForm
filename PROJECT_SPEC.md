@@ -26,35 +26,45 @@ Modern glassmorphism:
   - On `/onboarding`: Floating top-right toggle since the main navbar is hidden.
   - Behavior: Defaults to device setting, persists user choice in `localStorage`, zero theme flash.
 
-### 2. Animated Background Layer
+### 2. Radiating Lines Ambient Background
 - Component: [`src/components/AnimatedBackground.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/components/AnimatedBackground.tsx)
+- Context & Hook: [`src/context/BackgroundContext.tsx`](file:///c:/Users/Sanskar/Desktop/cep2/src/context/BackgroundContext.tsx) (`useBackground()`)
 - Renders:
-  - 3 large, slowly drifting blurred gradient blobs (hardware-accelerated CSS keyframes).
-  - Subtle floating particles via HTML5 Canvas (capped at 24 particles).
-  - Theme-aware palette (deep blue/purple/cyan in dark mode; soft pastel lavender/sky/rose in light mode).
+  - 80 thin gradient lines radiating outward from an off-center origin (~70% X, ~35% Y).
+  - Soft glowing origin dot with luminous core.
+  - Theme-aware palette: cyan (`rgb(6, 182, 212)`), violet (`rgb(139, 92, 246)`), and blue (`rgb(59, 130, 246)`) in dark mode; soft indigo (`rgb(99, 102, 241)`), pink (`rgb(236, 72, 153)`), and lavender in light mode.
+  - Very gentle breathing effect where line lengths vary slightly over time.
+  - Slow system rotation with randomized direction and smooth speed easing every 20–40 seconds (no abrupt jumps).
 - Performance & Accessibility:
-  - Automatically pauses when the browser tab is hidden (`document.hidden` event listener).
-  - Respects system accessibility `prefers-reduced-motion`: pauses movement and displays a static soft gradient.
-  - Fixed behind content with `pointer-events-none -z-10`, never obstructing clicks or interfering with content.
+  - Single HTML canvas strictly capped at 30 FPS.
+  - `devicePixelRatio` clamped to 1.5 to protect CPU and battery life on high-res displays.
+  - Completely pauses rendering when the browser tab is hidden (`document.hidden`).
+  - Respects `prefers-reduced-motion`: renders a single frozen static frame without running continuous animation loops.
+  - Fixed behind all content with `pointer-events-none -z-10`, never obstructing clicks or hurting text readability.
 
-#### How to Disable or Customize the Background on Specific Pages (e.g. Camera in Step 3)
-The `<AnimatedBackground />` component exposes props:
-- `enabled={false}`: Completely turns off the background (ideal for full-screen camera form checking).
-- `showParticles={false}`: Keeps the soft gradient blobs but disables canvas particle computations.
-- Custom usage example:
-  ```tsx
-  import AnimatedBackground from '@/components/AnimatedBackground';
+#### Background Modes (`full`, `static`, `off`)
+The component accepts a `mode` prop and connects to `useBackground()` context:
+- `mode="full"` (default): Runs the gentle 30 FPS rotation, breathing, and speed easing.
+- `mode="static"`: Draws one single frozen frame with zero ongoing animation (ideal for Step 3 live camera pages to reserve 100% GPU for MediaPipe pose estimation).
+- `mode="off"`: Renders nothing.
 
-  export default function CameraWorkoutPage() {
-    return (
-      <>
-        {/* Turn off background during live camera tracking to save CPU/GPU */}
-        <AnimatedBackground enabled={false} />
-        <div>... camera UI ...</div>
-      </>
-    );
-  }
-  ```
+Usage example for pages:
+```tsx
+import { useEffect } from 'react';
+import { useBackground } from '@/context/BackgroundContext';
+
+export default function CameraWorkoutPage() {
+  const { setMode } = useBackground();
+
+  useEffect(() => {
+    // Freeze background animation to static frame during camera usage
+    setMode('static');
+    return () => setMode('full');
+  }, [setMode]);
+
+  return <div>... live camera tracking ...</div>;
+}
+```
 
 ### 3. Scroll-Reveal & Interaction Animations (`framer-motion`)
 - Staggered wave entrance for Day 1 to Day 30 cards on `/plan`.
@@ -85,9 +95,18 @@ The `<AnimatedBackground />` component exposes props:
    - Volume adjusted by experience level.
    - Exercise data in a single separate file ([`src/lib/exerciseData.ts`](file:///c:/Users/Sanskar/Desktop/cep2/src/lib/exerciseData.ts)).
 
-3. **Plan page (`/plan`)**
-   - Grid of Day 1–30 cards. Each shows day number, workout type or "Rest day", status (not started/completed from logs).
-   - Click → `/plan/[day]` with exercises, sets, reps, rest. "Start workout" button disabled, labelled "Coming in Step 3".
+3. **Interactive Glass Timeline Page (`/plan`)**
+   - Vertical timeline layout with central glowing glass spine line (centered on desktop with alternating cards, left-aligned on mobile).
+   - Grouped into 5 weeks with sticky week headers ("Week 1 · Foundation", "Week 2 · Build", "Week 3 · Push", "Week 4 · Peak", "Week 5 · Finale") showing completed day counts and circular SVG progress rings.
+   - Distinct spine node anchor states:
+     - **Completed:** Filled glowing emerald circle with white check icon.
+     - **Up next:** First incomplete workout day with pulsing ring indicator and glowing tag.
+     - **Workout day not started:** Clean hollow ring with subtle center indicator.
+     - **Rest or recovery day:** Shorter compact card with coffee/moon icon and mobility guidance.
+   - Frosted glass cards with exercise chips, estimated workout duration, and accent hover glow.
+   - Scroll-linked glowing spine track pre-filled up to the last completed day on load.
+   - Smooth auto-scroll on page load to the "Up next" day + floating "Jump to Up next" button.
+   - Clicking any day card opens `/plan/[day]` with full sets, reps, and form guidance.
 
 4. **Navigation bar** on every page except onboarding: Workout, Diet, Logs. Highlights current page with sliding Framer Motion pill.
    - Diet page (`/diet`): placeholder "Coming in Step 2".

@@ -6,6 +6,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { BackgroundProvider } from '@/context/BackgroundContext';
 
 export const metadata: Metadata = {
   title: 'FitForm - AI Gym & Form Trainer',
@@ -26,16 +27,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
-          {/* Global Animated Background with Theme-Aware Glows and Particles */}
-          <AnimatedBackground />
+          <BackgroundProvider>
+            {/* Global Radiating Lines Background with Theme-Aware Glows */}
+            <AnimatedBackground />
 
-          {/* Global Navigation */}
-          <Navbar />
+            {/* Global Navigation */}
+            <Navbar />
 
-          {/* Page Content */}
-          <main className="relative z-10 flex-1 flex flex-col">
-            {children}
-          </main>
+            {/* Page Content */}
+            <main className="relative z-10 flex-1 flex flex-col">
+              {children}
+            </main>
+          </BackgroundProvider>
         </ThemeProvider>
       </body>
     </html>
