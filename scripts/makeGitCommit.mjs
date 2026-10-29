@@ -32,7 +32,7 @@ async function main() {
       name: 'FitForm Assistant',
       email: 'assistant@fitform.ai',
     },
-    message: 'Step 5B: real biometric analytics engine, progress metrics, and trustworthy dashboard',
+    message: 'docs: add comprehensive TECH_STACK.md for academic evaluation',
   });
 
   console.log('Git commit successfully created with SHA:', sha);

@@ -1,5 +1,45 @@
 [
   {
+    "id": 209,
+    "userId": 7,
+    "userName": "sumit",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 17,
+    "loadKg": null,
+    "durationSeconds": null,
+    "formScore": 79,
+    "mistakes": [
+      "Too fast — control your descent",
+      "Not deep enough",
+      "Leaning too far forward"
+    ],
+    "restSeconds": 150,
+    "mode": "live_camera",
+    "completedAt": "2026-10-28T12:01:12.620Z"
+  },
+  {
+    "id": 210,
+    "userId": 7,
+    "userName": "sumit",
+    "dayNumber": 1,
+    "exercise": "Bodyweight Squat",
+    "setNumber": 1,
+    "reps": 17,
+    "loadKg": null,
+    "durationSeconds": null,
+    "formScore": 79,
+    "mistakes": [
+      "Too fast — control your descent",
+      "Not deep enough",
+      "Leaning too far forward"
+    ],
+    "restSeconds": 14,
+    "mode": "live_camera",
+    "completedAt": "2026-10-28T12:01:12.620Z"
+  },
+  {
     "id": 208,
     "userId": 6,
     "userName": "Smit",
